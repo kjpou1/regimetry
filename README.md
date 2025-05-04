@@ -8,7 +8,7 @@
 
 **regimetry** is a *research-driven*, unsupervised regime detection engine for financial markets. It extracts latent structure from time-series data using deep learning embeddings and clustering, enabling traders and researchers to identify distinct behavioral phases in market activity.
 
-This project begins as a learning ground and may evolve into a core component of production-grade strategy pipelines.
+This project begins as a learning ground and may evolve into a core component of my trading strategy pipelines.
 
 ---
 
@@ -56,7 +56,7 @@ regimetry/
 ├── config.yaml           # Tunable pipeline settings
 ├── pyproject.toml
 └── README.md
-````
+```
 
 ---
 
