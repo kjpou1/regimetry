@@ -6,24 +6,19 @@ from datetime import datetime
 from logging.handlers import RotatingFileHandler
 
 from regimetry.config.config import Config
-
+from regimetry.core.log_formatters import RelativePathFormatter
 
 class LoggerManager:
     """Custom Logger Manager with enhanced features."""
 
-    # Initialize default log settings
     LOG_FILE = f"{datetime.now().strftime('%m_%d_%Y_%H_%M_%S')}.log"
-    LOGS_DIR = Config().LOG_DIR
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
     LOG_JSON = os.getenv("LOG_JSON", "false").lower() == "true"
 
-    # Ensure the logs directory exists
-    os.makedirs(LOGS_DIR, exist_ok=True)
-    LOG_FILE_PATH = os.path.join(LOGS_DIR, LOG_FILE)
-
     # Shared formatter for plain text logs
-    PLAIN_FORMATTER = logging.Formatter(
-        "[ %(asctime)s ] %(levelname)s [%(name)s:%(lineno)d] - %(message)s"
+    PLAIN_FORMATTER = RelativePathFormatter(
+        "[ %(asctime)s ] %(levelname)s [%(relativepath)s:%(lineno)d] - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     # Shared formatter for JSON logs
@@ -51,26 +46,25 @@ class LoggerManager:
         """Get a logger with the specified name and enhanced configuration."""
         logger = logging.getLogger(name)
         logger.setLevel(LoggerManager.LOG_LEVEL)
+        logger.propagate = False
 
         if not logger.hasHandlers():
-            # Add a rotating file handler
+            config = Config()
+            log_dir = config.LOG_DIR
+            os.makedirs(log_dir, exist_ok=True)
+            log_path = os.path.join(log_dir, LoggerManager.LOG_FILE)
+
+            # File handler
             file_handler = RotatingFileHandler(
-                LoggerManager.LOG_FILE_PATH, maxBytes=5 * 1024 * 1024, backupCount=5
+                log_path, maxBytes=5 * 1024 * 1024, backupCount=5
             )
-            file_handler.setFormatter(
-                LoggerManager.JsonFormatter()
-                if LoggerManager.LOG_JSON
-                else LoggerManager.PLAIN_FORMATTER
-            )
+            formatter = LoggerManager.JsonFormatter() if LoggerManager.LOG_JSON else LoggerManager.PLAIN_FORMATTER
+            file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
 
-            # Add a console handler
+            # Console handler
             console_handler = logging.StreamHandler(sys.stdout)
-            console_handler.setFormatter(
-                LoggerManager.JsonFormatter()
-                if LoggerManager.LOG_JSON
-                else LoggerManager.PLAIN_FORMATTER
-            )
+            console_handler.setFormatter(formatter)
             logger.addHandler(console_handler)
 
         return logger
