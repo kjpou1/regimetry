@@ -28,7 +28,10 @@ Formally:
 ### 1. **Data Ingestion**
 - Load daily bar data per instrument  
 - Normalize features (Close, AHMA, LP, LC, etc.)  
+- Features are typically sourced from [`ConvolutionLab`](https://github.com/kjpou1/ConvolutionLab),  
+  but `regimetry` is **not dependent** on that specific pipeline — any compatible feature set can be used.  
 - Slice into overlapping windows (default: 30 bars, stride 1)
+
 
 ### 2. **Embedding Pipeline**
 - **Pass each window through a Transformer encoder (default),** which maps the window into a dense latent representation.  
@@ -76,6 +79,16 @@ regimetry/
 * [ ] Clustering pipeline prototype
 * [ ] Historical regime labeling and export
 * [ ] Live regime inference module
+
+---
+
+## 🔗 Related Projects
+
+- [`ConvolutionLab`](https://github.com/kjpou1/ConvolutionLab):  
+  A technical feature engineering framework that produces structured indicators (e.g., AHMA, LP, LC, ATR)  
+  used as inputs to `regimetry`.  
+  **Note:** While `regimetry` is compatible with ConvolutionLab outputs, it is not tightly coupled to it —  
+  any feature-rich dataset with proper formatting can be used for embedding and clustering.
 
 ---
 
