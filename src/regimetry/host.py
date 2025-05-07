@@ -5,6 +5,7 @@ from regimetry.config.config import Config
 from regimetry.exception import CustomException
 from regimetry.logger_manager import LoggerManager
 from regimetry.models.command_line_args import CommandLineArgs
+from regimetry.pipelines.ingestion_pipeline import IngestionPipeline
 
 logging = LoggerManager.get_logger(__name__)
 
@@ -30,10 +31,9 @@ class Host:
             self.config.config_path = args.config
             self.config.load_from_yaml(args.config)
             
-        if args.signal_data_dir:
-            self.config.signal_data_dir = args.signal_data_dir
-
-        logging.info("Host initialized with arguments: %s", self.args)
+        if args.signal_input_path:
+            logging.info(f"Overriding signal_input_path from CLI: {args.signal_input_path}")
+            self.config.signal_input_path = args.signal_input_path
 
     def run(self):
         """
@@ -80,10 +80,23 @@ class Host:
 
     async def run_ingestion(self):
         """
-        Run the intent extraction pipeline from newsletter `.txt` files.
+        Run the supervised ingestion pipeline from CSV input to processed train/val/test outputs.
         """
-        # Default paths can later be moved to config or CLI args
-        input_dir = self.config.signal_data_dir
+        logging.info("Initializing ingestion pipeline...")
+
+        # You can optionally parameterize these via CLI args later
+        pipeline = IngestionPipeline(
+            val_size=0.2,
+            test_size=0.2
+        )
+
+        result = pipeline.run()
+
+        logging.info("Ingestion pipeline result:")
+        logging.info(f"  Train: {result['train_path']}")
+        logging.info(f"  Val:   {result['val_path']}")
+        logging.info(f"  Test:  {result['test_path']}")
+        logging.info(f"  Features: {result['features']}")
 
 
     async def run_training(self):

@@ -1,10 +1,9 @@
 from dataclasses import dataclass
-from typing import List, Optional
-
+from typing import Optional
 
 @dataclass
 class CommandLineArgs:
     command: str
-    config: str
+    config: Optional[str]
     debug: bool
-    signal_data_dir: Optional[str] = None
+    signal_input_path: Optional[str] = None

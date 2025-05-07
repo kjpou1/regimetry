@@ -20,10 +20,6 @@ class Config(metaclass=SingletonMeta):
         self._model_type = None
         self._best_of_all = False
         self._save_best = False
-        self._batch_size = int(os.getenv("BATCH_SIZE", 5))
-        self._max_batches = os.getenv("MAX_BATCHES")
-        self._max_batches = int(self._max_batches) if self._max_batches else None
-        self._batch_offset = int(os.getenv("BATCH_OFFSET", 0))
 
         self.BASE_DIR = os.getenv("BASE_DIR", "artifacts")
         self.RAW_DATA_DIR = os.path.join(self.BASE_DIR, "data", "raw")
@@ -36,7 +32,13 @@ class Config(metaclass=SingletonMeta):
         self.REPORTS_DIR = os.path.join(self.BASE_DIR, "reports")
         self.PROCESSED_DATA_DIR = os.path.join(self.BASE_DIR, "data", "processed")
 
-        self._signal_data_dir = os.getenv("SIGNAL_DATA_DIR", "artifacts/data/raw")
+        self._signal_input_path = os.getenv("SIGNAL_INPUT_PATH", os.path.join(self.RAW_DATA_DIR, "signal_input.csv"))
+        self._rhd_threshold = 0.002
+
+        # Default to include all columns and exclude none
+        self._include_columns = "*"  # Default to include all columns
+        self._exclude_columns = []  # Empty list to exclude specific columns
+
 
         self._ensure_directories_exist()
         Config._is_initialized = True
@@ -70,10 +72,18 @@ class Config(metaclass=SingletonMeta):
             print(f"[Config] Overriding 'debug': {self._debug} → {data['debug']}")
             self.debug = data["debug"]
 
-        if "signal_data_dir" in data:
-            print(f"[Config] Overriding 'signal_data_dir': {self._signal_data_dir} → {data['signal_data_dir']}")
-            self.signal_data_dir = data["signal_data_dir"]
+        if "signal_input_path" in data:
+            print(f"[Config] Overriding 'signal_input_path': {self._signal_input_path} → {data['signal_input_path']}")
+            self.signal_input_path = data["signal_input_path"]
 
+        # Set attributes from the loaded YAML file
+        if "include_columns" in data:
+            print(f"[Config] Overriding 'include_columns': {self._include_columns} → {data['include_columns']}")
+            self.include_columns = data["include_columns"]
+        if "exclude_columns" in data:
+            print(f"[Config] Overriding 'exclude_columns': {self._exclude_columns} → {data['exclude_columns']}")
+            self.exclude_columns = data["exclude_columns"]
+            
     @property
     def config_path(self):
         return self._config_path
@@ -95,15 +105,61 @@ class Config(metaclass=SingletonMeta):
         self._debug = value
 
     @property
-    def signal_data_dir(self):
-        return self._signal_data_dir
+    def signal_input_path(self):
+        return self._signal_input_path
 
-    @signal_data_dir.setter
-    def signal_data_dir(self, value):
+    @signal_input_path.setter
+    def signal_input_path(self, value):
         if not isinstance(value, str):
-            raise ValueError("SIGNAL_DATA_DIR must be a string.")
-        self._signal_data_dir = value
+            raise ValueError("signal_input_path must be a string.")
+        self._signal_input_path = value
 
+    @property
+    def rhd_threshold(self) -> float:
+        return self._rhd_threshold
+
+    @rhd_threshold.setter
+    def rhd_threshold(self, value: float):
+        self._rhd_threshold = value
+
+
+    @property
+    def include_columns(self):
+        """
+        Getter for include_columns.
+        """
+        return self._include_columns
+
+    @include_columns.setter
+    def include_columns(self, value):
+        """
+        Setter for include_columns.
+        If value is "*" (default), all columns are included.
+        """
+        if value == "*":
+            self._include_columns = "*"
+        elif isinstance(value, list):
+            self._include_columns = value
+        else:
+            raise ValueError("Include columns must be a list or '*'")
+
+    @property
+    def exclude_columns(self):
+        """
+        Getter for exclude_columns.
+        """
+        return self._exclude_columns
+
+    @exclude_columns.setter
+    def exclude_columns(self, value):
+        """
+        Setter for exclude_columns.
+        Expects a list of columns to exclude.
+        """
+        if isinstance(value, list):
+            self._exclude_columns = value
+        else:
+            raise ValueError("Exclude columns must be a list")
     @classmethod
     def initialize(cls):
         if not cls._is_initialized:

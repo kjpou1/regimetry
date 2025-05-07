@@ -20,12 +20,12 @@ class CommandLine:
 
         # Subcommand: ingest
         ingest_parser = subparsers.add_parser(
-            "ingest", help="Download and prepare datasets."
+            "ingest", help="Run ingestion pipeline with optional config overrides."
         )
         ingest_parser.add_argument(
-            "--signal-data-dir",
+            "--signal-input-path",
             type=str,
-            help="Path to directory containing signal data files (overrides .env)",
+            help="Path to the signal-enriched input CSV file (overrides config or .env)",
         )
         ingest_parser.add_argument(
             "--config",
@@ -69,5 +69,5 @@ class CommandLine:
             command=args.command,
             config=args.config,
             debug=args.debug,
-            signal_data_dir=getattr(args, "signal_data_dir", None),
+            signal_input_path=getattr(args, "signal_input_path", None),
         )
