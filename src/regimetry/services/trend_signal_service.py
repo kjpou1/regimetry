@@ -64,4 +64,19 @@ class TrendSignalService:
         df["Weak_RHD_Bull"] = df["Strong_RHD_Bull"] & (df["Leavitt_Convolution"] > df["Leavitt_Projection"])
         df["Weak_RHD_Bear"] = df["Strong_RHD_Bear"] & (df["Leavitt_Convolution"] < df["Leavitt_Projection"])
 
+
+        # Combine RHD Bull fields into one column
+        df["RHD_Bull"] = "Strong"
+        df.loc[df["Moderate_RHD_Bull"], "RHD_Bull"] = "Medium"
+        df.loc[df["Weak_RHD_Bull"], "RHD_Bull"] = "Weak"
+
+        # Combine RHD Bear fields into one column
+        df["RHD_Bear"] = "Strong"
+        df.loc[df["Moderate_RHD_Bear"], "RHD_Bear"] = "Medium"
+        df.loc[df["Weak_RHD_Bear"], "RHD_Bear"] = "Weak"
+
+        # Drop the individual RHD columns after categorizing
+        df.drop(columns=["Strong_RHD_Bull", "Strong_RHD_Bear", "Moderate_RHD_Bull", "Moderate_RHD_Bear", 
+                        "Weak_RHD_Bull", "Weak_RHD_Bear"], inplace=True)
+        
         return df

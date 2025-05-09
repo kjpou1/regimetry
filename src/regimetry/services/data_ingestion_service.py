@@ -46,13 +46,37 @@ class DataIngestionService:
                 logging.info(f"Excluding columns: {self.config.exclude_columns}")
 
             # Including only specified columns if config is provided
-            if self.config.include_columns != "*":
-                included_columns = [col for col in self.config.include_columns if col in df.columns]
-                df = df[included_columns]
-                logging.info(f"Including columns: {included_columns}") 
+            if self.config.include_columns == "*":  # Handle the '*' case
+                logging.info("Including all columns")
+                included_columns = df.columns.tolist()  # Include all columns
+            else:
+                included_columns = [
+                    col for col in self.config.include_columns if col in df.columns
+                ]
+                df = df[included_columns]  # Only keep the specified columns
+                logging.info(f"Including columns: {included_columns}")
                            
             df = TrendSignalService.add_trend_signals(df, self.config.rhd_threshold)
             logging.info("Added trend signal flags.")
+
+            # Drop missing values based on the included columns (if '*' include all columns)
+            # df = df.dropna(subset=included_columns)
+            # logging.info(f"Dropped rows with missing values in columns: {included_columns}")
+            # **Handle missing values for the critical columns (LC_Prev, LP_Prev, LP_Slope)**
+            missing_columns = ['LC_Prev', 'LP_Prev', 'LP_Slope']
+            df[missing_columns] = df[missing_columns].fillna(0)  # Fill NaN with zero
+            logging.info(f"Filled NaN values with 0 for columns: {missing_columns}")
+    
+            # List of columns to fill NaN values with 'Flat'
+            columns_to_fill = ['Prevailing_Trend','Baseline_Aligned', 'Trend_Agreement', 'Entry_Trigger', 'Entry_Confirmed']
+
+            # Fill NaN values in these columns with 'Flat'
+            df[columns_to_fill] = df[columns_to_fill].fillna('Flat')
+
+
+            if df.isnull().all().sum() > 0:
+                raise DataProcessingError("All rows contain NaNs after processing!")
+
 
             return df
 

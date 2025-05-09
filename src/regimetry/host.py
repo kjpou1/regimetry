@@ -6,6 +6,8 @@ from regimetry.exception import CustomException
 from regimetry.logger_manager import LoggerManager
 from regimetry.models.command_line_args import CommandLineArgs
 from regimetry.pipelines.ingestion_pipeline import IngestionPipeline
+from regimetry.pipelines.train_pipeline import TrainPipeline
+from regimetry.services.model_training_service import ModelTrainingService
 
 logging = LoggerManager.get_logger(__name__)
 
@@ -101,6 +103,12 @@ class Host:
 
     async def run_training(self):
         """
-        Execute the model training workflow.
+        Execute the model training workflow by calling the model training service.
         """
-        pass
+        try:
+            train_pipeline = TrainPipeline()
+            train_pipeline.run_pipeline()
+
+        except Exception as e:
+            logging.error(f"Error during host training: {e}")
+            raise e
