@@ -4,6 +4,7 @@ import yaml
 from dotenv import load_dotenv
 
 from regimetry.models import SingletonMeta
+from regimetry.utils.path_utils import get_project_root
 
 
 class Config(metaclass=SingletonMeta):
@@ -21,7 +22,16 @@ class Config(metaclass=SingletonMeta):
         self._best_of_all = False
         self._save_best = False
 
-        self.BASE_DIR = os.getenv("BASE_DIR", "artifacts")
+        
+        self.PROJECT_ROOT = get_project_root()
+        # Resolve BASE_DIR intelligently
+        base_dir_env = os.getenv("BASE_DIR", "artifacts")
+        if os.path.isabs(base_dir_env):
+            self.BASE_DIR = base_dir_env
+        else:
+            # Resolve relative to project root (assumed to be two levels up from this file)
+            self.BASE_DIR = os.path.join(self.PROJECT_ROOT, base_dir_env)
+
         self.RAW_DATA_DIR = os.path.join(self.BASE_DIR, "data", "raw")
         self.MODEL_DIR = os.path.join(self.BASE_DIR, "models")
         self.MODEL_FILE_PATH = os.path.join(self.MODEL_DIR, "model.pkl")
