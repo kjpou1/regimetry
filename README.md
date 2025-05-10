@@ -3,7 +3,22 @@
 > **Mapping latent regimes in financial time series.**
 
 ---
-
+- [regimetry](#regimetry)
+  - [📘 Overview](#-overview)
+  - [🔍 What is a Regime?](#-what-is-a-regime)
+  - [🧠 How It Works](#-how-it-works)
+    - [1. **Data Ingestion**](#1-data-ingestion)
+    - [2. **Embedding Pipeline**](#2-embedding-pipeline)
+    - [3. **Clustering**](#3-clustering)
+    - [4. **Visualization \& Interpretation**](#4-visualization--interpretation)
+  - [🛠 Project Structure](#-project-structure)
+  - [🧭 Orientation Going Forward](#-orientation-going-forward)
+  - [✅ Status](#-status)
+  - [🔗 Related Projects](#-related-projects)
+  - [📖 Further Reading](#-further-reading)
+  - [📄 License](#-license)
+  - [👤 Author](#-author)
+---
 ## 📘 Overview
 
 **regimetry** is a *research-driven*, unsupervised regime detection engine for financial markets. It extracts latent structure from time-series data using deep learning embeddings and clustering, enabling traders and researchers to identify distinct behavioral phases in market activity.
@@ -89,6 +104,11 @@ regimetry/
   used as inputs to `regimetry`.  
   **Note:** While `regimetry` is compatible with ConvolutionLab outputs, it is not tightly coupled to it —  
   any feature-rich dataset with proper formatting can be used for embedding and clustering.
+
+---
+
+## 📖 Further Reading  
+For foundational papers, models, and tools behind the `regimetry` pipeline, see the [References](./docs/REFERENCES_README.md).
 
 ---
 
