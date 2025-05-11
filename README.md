@@ -11,10 +11,10 @@
     - [2. **Embedding Pipeline**](#2-embedding-pipeline)
     - [3. **Clustering**](#3-clustering)
     - [4. **Visualization \& Interpretation**](#4-visualization--interpretation)
-  - [🧪 Example Dataset](#-example-dataset)
-    - [📟 Command Line Usage](#-command-line-usage)
+  - [📟 Command Line Usage](#-command-line-usage)
       - [🔹 Ingest Data](#-ingest-data)
       - [🔹 Generate Embeddings](#-generate-embeddings)
+  - [🧪 Example Dataset](#-example-dataset)
   - [🛠 Project Structure](#-project-structure)
   - [🧭 Orientation Going Forward](#-orientation-going-forward)
   - [✅ Status](#-status)
@@ -68,32 +68,8 @@ Formally:
 
 ---
 
-## 🧪 Example Dataset
+## 📟 Command Line Usage
 
-An example file is included at [`examples/EUR_USD_processed_signals.csv`](examples/EUR_USD_processed_signals.csv) to help you test the pipeline immediately.
-
-This file contains:
-- Processed technical indicators (AHMA, LP, LC, ATR, etc.)
-- Cleaned and aligned daily bars for EUR/USD
-- A ready-to-ingest format compatible with the full `embedding_pipeline`
-
-You can run the **ingestion pipeline** on this dataset:
-
-```bash
-python run.py ingest --signal-input-path examples/EUR_USD_processed_signals.csv
-````
-
-— OR —
-
-Run the **embedding pipeline** to generate transformer embeddings:
-
-```bash
-python run.py embed --signal-input-path examples/EUR_USD_processed_signals.csv
-```
-
----
-
-### 📟 Command Line Usage
 
 Run `regimetry` pipelines directly from the command line with optional overrides.
 
@@ -125,6 +101,31 @@ This will:
 * Save the result to `artifacts/embeddings/EUR_USD_embeddings.npy`
 
 > If `--output-name` is not provided, the default file is `embeddings.npy`.
+
+---
+
+## 🧪 Example Dataset
+
+An example file is included at [`examples/EUR_USD_processed_signals.csv`](examples/EUR_USD_processed_signals.csv) to help you test the pipeline immediately.
+
+This file contains:
+- Processed technical indicators (AHMA, LP, LC, ATR, etc.)
+- Cleaned and aligned daily bars for EUR/USD
+- A ready-to-ingest format compatible with the full `embedding_pipeline`
+
+You can run the **ingestion pipeline** on this dataset:
+
+```bash
+python run.py ingest --signal-input-path examples/EUR_USD_processed_signals.csv
+````
+
+— OR —
+
+Run the **embedding pipeline** to generate transformer embeddings:
+
+```bash
+python run.py embed --signal-input-path examples/EUR_USD_processed_signals.csv
+```
 
 ---
 
