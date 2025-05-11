@@ -2,6 +2,12 @@
 
 > **Mapping latent regimes in financial time series.**
 
+![MIT License](https://img.shields.io/badge/license-MIT-green.svg)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
+![Built with TensorFlow](https://img.shields.io/badge/built%20with-TensorFlow-orange.svg?logo=tensorflow)
+![Development Status](https://img.shields.io/badge/status-active-brightgreen)
+![Made With ❤️](https://img.shields.io/badge/made%20with-%E2%9D%A4-red)
+
 ---
 - [regimetry](#regimetry)
   - [📘 Overview](#-overview)
