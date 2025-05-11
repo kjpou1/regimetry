@@ -39,21 +39,21 @@ class CommandLine:
             help="Enable debug mode during ingestion.",
         )
 
-        # Subcommand: train
-        train_parser = subparsers.add_parser(
-            "train", help="Train the model using the configured pipeline."
+        # Subcommand: embed (was "train")
+        embed_parser = subparsers.add_parser(
+            "embed", help="Generate transformer embeddings for clustering or visualization."
         )
-        train_parser.add_argument(
+        embed_parser.add_argument(
             "--config",
             type=str,
             required=False,
-            default="config/model_config.yaml",
-            help="Path to the configuration file for training.",
+            default="config/embedding_config.yaml",  # or leave as model_config.yaml
+            help="Path to the configuration file for embedding pipeline.",
         )
-        train_parser.add_argument(
+        embed_parser.add_argument(
             "--debug",
             action="store_true",
-            help="Enable debug mode during training.",
+            help="Enable debug mode during embedding.",
         )
 
         # Parse the arguments

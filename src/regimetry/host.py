@@ -6,7 +6,7 @@ from regimetry.exception import CustomException
 from regimetry.logger_manager import LoggerManager
 from regimetry.models.command_line_args import CommandLineArgs
 from regimetry.pipelines.ingestion_pipeline import IngestionPipeline
-from regimetry.pipelines.train_pipeline import TrainPipeline
+from regimetry.pipelines.embedding_pipeline import EmbeddingPipeline
 from regimetry.services.model_training_service import ModelTrainingService
 
 logging = LoggerManager.get_logger(__name__)
@@ -57,13 +57,13 @@ class Host:
             if self.args.command == "ingest":
                 logging.info("Executing data ingestion workflow.")
                 await self.run_ingestion()
-            elif self.args.command == "train":
-                logging.info("Executing training workflow.")
+            elif self.args.command == "embed":
+                logging.info("Executing embedding workflow.")
                 # if not self.args.model_type:
                 #     raise ValueError(
                 #         "A model type must be specified for the 'train' command."
                 #     )
-                await self.run_training()
+                await self.run_embedding()
 
             else:
                 logging.error("No valid subcommand provided.")
@@ -101,12 +101,12 @@ class Host:
         logging.info(f"  Features: {result['features']}")
 
 
-    async def run_training(self):
+    async def run_embedding(self):
         """
         Execute the model training workflow by calling the model training service.
         """
         try:
-            train_pipeline = TrainPipeline()
+            train_pipeline = EmbeddingPipeline(val_size=0.2, test_size=0.2)
             train_pipeline.run_pipeline()
 
         except Exception as e:

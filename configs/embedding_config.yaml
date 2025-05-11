@@ -1,0 +1,17 @@
+# configs/ingest_config.yaml
+
+# Enable debug logging (optional)
+debug: true
+
+# Path to the input signal-enriched CSV (e.g., includes AHMA, LP, LC, indicators, Movement_Class)
+#signal_input_path: data/raw/signal_input.csv
+signal_input_path: /Users/kenneth/Public/projects/python/trading_strategies/convolution_strategy_ml/artifacts/preclose/EUR_USD/EUR_USD_processed_signals.csv
+
+include_columns: "*"
+  # - Open
+  # - Close
+  # - ATR
+  # - AHMA
+exclude_columns: []
+#   - Predictions
+#   - Confidence

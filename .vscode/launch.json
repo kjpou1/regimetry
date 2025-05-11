@@ -26,11 +26,11 @@
       "args": ["ingest", "--config", "configs/ingest_config.yaml", "--signal-input-path", "/Users/kenneth/Public/projects/python/trading_strategies/convolution_strategy_ml/artifacts/preclose/EUR_USD/EUR_USD_processed_signals.csv"]
     },
     {
-      "name": "Train",
+      "name": "Embed",
       "type": "debugpy",
       "request": "launch",
       "program": "launch_host.py",
-      "args": ["train", "--config", "configs/train_config.yaml"]
+      "args": ["embed", "--config", "configs/embedding_config.yaml"]
     },
   ]
 }

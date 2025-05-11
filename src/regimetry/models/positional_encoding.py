@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-
+from regimetry.utils.pad_utils import pad_to_even_dim
 
 class PositionalEncoding:
     @staticmethod
@@ -61,6 +61,13 @@ class PositionalEncoding:
         d_model = tf.shape(inputs)[2]
 
         if method == 'sinusoidal':
+            if encoding_style == 'stacked':
+                original_d_model = tf.shape(inputs)[-1]
+                if original_d_model % 2 != 0:
+                    tf.print("[PositionalEncoding] ⚠️ Warning: Input d_model is odd (", original_d_model,
+                            "). Padding to even for 'stacked' positional encoding.")
+                inputs = pad_to_even_dim(inputs)
+                d_model = tf.shape(inputs)[2]
             pe = PositionalEncoding.get_sinusoidal_encoding(seq_len, d_model, encoding_style)
             return inputs + tf.expand_dims(pe, axis=0)
 
