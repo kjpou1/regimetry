@@ -12,6 +12,9 @@
     - [3. **Clustering**](#3-clustering)
     - [4. **Visualization \& Interpretation**](#4-visualization--interpretation)
   - [🧪 Example Dataset](#-example-dataset)
+    - [📟 Command Line Usage](#-command-line-usage)
+      - [🔹 Ingest Data](#-ingest-data)
+      - [🔹 Generate Embeddings](#-generate-embeddings)
   - [🛠 Project Structure](#-project-structure)
   - [🧭 Orientation Going Forward](#-orientation-going-forward)
   - [✅ Status](#-status)
@@ -89,6 +92,43 @@ python run.py embed --signal-input-path examples/EUR_USD_processed_signals.csv
 ```
 
 ---
+
+### 📟 Command Line Usage
+
+Run `regimetry` pipelines directly from the command line with optional overrides.
+
+#### 🔹 Ingest Data
+
+```bash
+python run.py ingest \
+  --signal-input-path examples/EUR_USD_processed_signals.csv
+```
+
+This will:
+
+* Parse the input CSV
+* Normalize and structure features
+* Save the result to `artifacts/data/processed/`
+
+#### 🔹 Generate Embeddings
+
+```bash
+python run.py embed \
+  --signal-input-path examples/EUR_USD_processed_signals.csv \
+  --output-name EUR_USD_embeddings.npy
+```
+
+This will:
+
+* Apply rolling window and positional encoding
+* Run transformer encoder to extract dense regime embeddings
+* Save the result to `artifacts/embeddings/EUR_USD_embeddings.npy`
+
+> If `--output-name` is not provided, the default file is `embeddings.npy`.
+
+---
+
+
 
 ## 🛠 Project Structure
 
