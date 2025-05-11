@@ -23,7 +23,7 @@
       "type": "debugpy",
       "request": "launch",
       "program": "launch_host.py",
-      "args": ["ingest", "--config", "configs/ingest_config.yaml", "--signal-input-path", "/Users/kenneth/Public/projects/python/trading_strategies/convolution_strategy_ml/artifacts/preclose/EUR_USD/EUR_USD_processed_signals.csv"]
+      "args": ["ingest", "--config", "configs/ingest_config.yaml", "--signal-input-path", "./examples/EUR_USD_processed_signals.csv"]
     },
     {
       "name": "Embed",
