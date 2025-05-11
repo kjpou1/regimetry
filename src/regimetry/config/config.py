@@ -41,8 +41,10 @@ class Config(metaclass=SingletonMeta):
         self.HISTORY_FILE_PATH = os.path.join(self.HISTORY_DIR, "training_history.json")
         self.REPORTS_DIR = os.path.join(self.BASE_DIR, "reports")
         self.PROCESSED_DATA_DIR = os.path.join(self.BASE_DIR, "data", "processed")
+        self.EMBEDDINGS_DIR = os.path.join(self.BASE_DIR, "embeddings")
 
         self._signal_input_path = os.getenv("SIGNAL_INPUT_PATH", os.path.join(self.RAW_DATA_DIR, "signal_input.csv"))
+        self._output_name = os.getenv("OUTPUT_NAME", "embeddings.npy")
         self._rhd_threshold = 0.002
 
         # Default to include all columns and exclude none
@@ -57,6 +59,7 @@ class Config(metaclass=SingletonMeta):
         for d in [
             self.RAW_DATA_DIR,
             self.PROCESSED_DATA_DIR,
+            self.EMBEDDINGS_DIR,
             self.MODEL_DIR,
             self.LOG_DIR,
             self.REPORTS_DIR,
@@ -93,6 +96,10 @@ class Config(metaclass=SingletonMeta):
         if "exclude_columns" in data:
             print(f"[Config] Overriding 'exclude_columns': {self._exclude_columns} → {data['exclude_columns']}")
             self.exclude_columns = data["exclude_columns"]
+        if "output_name" in data:
+            print(f"[Config] Overriding 'output_name': {self._output_name} → {data['output_name']}")
+            self.output_name = data["output_name"]
+
             
     @property
     def config_path(self):
@@ -170,6 +177,17 @@ class Config(metaclass=SingletonMeta):
             self._exclude_columns = value
         else:
             raise ValueError("Exclude columns must be a list")
+        
+    @property
+    def output_name(self) -> str:
+        return self._output_name
+
+    @output_name.setter
+    def output_name(self, value: str):
+        if not isinstance(value, str):
+            raise ValueError("output_name must be a string.")
+        self._output_name = value
+                
     @classmethod
     def initialize(cls):
         if not cls._is_initialized:

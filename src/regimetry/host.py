@@ -7,7 +7,6 @@ from regimetry.logger_manager import LoggerManager
 from regimetry.models.command_line_args import CommandLineArgs
 from regimetry.pipelines.ingestion_pipeline import IngestionPipeline
 from regimetry.pipelines.embedding_pipeline import EmbeddingPipeline
-from regimetry.services.model_training_service import ModelTrainingService
 
 logging = LoggerManager.get_logger(__name__)
 
@@ -36,6 +35,10 @@ class Host:
         if args.signal_input_path:
             logging.info(f"Overriding signal_input_path from CLI: {args.signal_input_path}")
             self.config.signal_input_path = args.signal_input_path
+
+        if args.output_name:
+            logging.info(f"Overriding output_name from CLI: {args.output_name}")
+            self.config.output_name = args.output_name            
 
     def run(self):
         """

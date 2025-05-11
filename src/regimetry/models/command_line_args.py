@@ -7,3 +7,4 @@ class CommandLineArgs:
     config: Optional[str]
     debug: bool
     signal_input_path: Optional[str] = None
+    output_name: Optional[str] = None

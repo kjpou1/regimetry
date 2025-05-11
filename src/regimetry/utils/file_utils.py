@@ -130,3 +130,42 @@ def save_training_artifacts(history, model_type, run_id):
             f"Failed to save training artifacts for model {model_type}: {str(e)}"
         )
         raise CustomException(f"Failed to save training artifacts: {str(e)}")
+
+def save_array(array: np.ndarray, file_path: str) -> None:
+    """
+    Save a NumPy array to a `.npy` file with directory creation.
+
+    Args:
+        array (np.ndarray): The array to save.
+        file_path (str): The path to save the array to.
+    """
+    try:
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        np.save(file_path, array)
+        logging.info(f"Array saved successfully to {file_path}")
+    except Exception as e:
+        logging.error(f"Failed to save array to {file_path}. Error: {e}")
+        raise CustomException(e, sys) from e
+
+def load_array(file_path: str) -> np.ndarray:
+    """
+    Load a NumPy array from a `.npy` file.
+
+    Args:
+        file_path (str): Path to the .npy file.
+
+    Returns:
+        np.ndarray: Loaded array.
+
+    Raises:
+        CustomException: If loading fails.
+    """
+    try:
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+        array = np.load(file_path)
+        logging.info(f"Array loaded successfully from {file_path}")
+        return array
+    except Exception as e:
+        logging.error(f"Failed to load array from {file_path}. Error: {e}")
+        raise CustomException(e, sys) from e

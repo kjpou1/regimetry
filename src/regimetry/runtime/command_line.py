@@ -56,6 +56,12 @@ class CommandLine:
             help="Path to the configuration file for embedding pipeline.",
         )
         embed_parser.add_argument(
+            "--output-name",
+            type=str,
+            required=False,
+            help="Optional name for the saved embeddings file (default: embeddings.npy)",
+        )
+        embed_parser.add_argument(
             "--debug",
             action="store_true",
             help="Enable debug mode during embedding.",
@@ -75,4 +81,6 @@ class CommandLine:
             config=args.config,
             debug=args.debug,
             signal_input_path=getattr(args, "signal_input_path", None),
+            output_name=getattr(args, "output_name", None),
+
         )

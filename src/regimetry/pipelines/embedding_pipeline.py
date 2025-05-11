@@ -14,12 +14,10 @@ from regimetry.models.positional_encoding import PositionalEncoding
 from regimetry.models.rolling_windows_generator import RollingWindowGenerator
 from regimetry.services.data_ingestion_service import DataIngestionService
 from regimetry.services.data_transformation_service import DataTransformationService
-from regimetry.services.model_training_service import ModelTrainingService
+from regimetry.services.model_embedding_service import ModelEmbeddingService
+from regimetry.utils.file_utils import save_array
 from regimetry.utils.utils import inspect_transformed_output, print_feature_block
-# from src.services.report_service import ReportService
-# from src.utils.file_utils import save_json, save_object
-# from src.utils.history_utils import append_training_history, update_training_history
-# from src.utils.yaml_loader import load_model_config
+
 import tensorflow as tf
 
 logging = LoggerManager.get_logger(__name__)
@@ -46,6 +44,7 @@ class EmbeddingPipeline:
                 val_size=self.val_size,
                 test_size=self.test_size
             )
+            logging.info(f"📁 Ingested paths: train={train_path}, val={val_path}, test={test_path}")
 
             # STEP 2: Data Transformation
             logging.info("🔄 Running data transformation.")
@@ -69,16 +68,23 @@ class EmbeddingPipeline:
             )
             logging.info(f"📐 Positional encoding applied: shape={X_pe_final.shape}")
 
-            # STEP 5: Embedding Extraction (optional, add model here)
-            # encoder = build_unsupervised_transformer_encoder(...)
-            # embeddings = encoder.predict(X_pe_final, batch_size=64)
-            # logging.info(f"✅ Embeddings shape: {embeddings.shape}")
+            # STEP 5: Embedding Extraction
+            service = ModelEmbeddingService(input_shape=X_pe_final.shape[1:])
+            embeddings = service.embed(X_pe_final)
+            logging.info(f"✅ Embeddings shape: {embeddings.shape}")
 
+            filename = self.config.output_name
+            filepath = os.path.join(self.config.EMBEDDINGS_DIR, filename)
+            save_array(embeddings, filepath)
+            logging.info(f"✅ Embeddings saved: {filepath}")
+
+
+            
             return {
                 "ingested_shape": train_arr.shape,
                 "rolling_windows_shape": rolling_windows.shape,
                 "encoded_shape": X_pe_final.shape,
-                # "embeddings": embeddings,
+                "embeddings": embeddings,
             }
 
         except Exception as e:
