@@ -157,10 +157,15 @@ regimetry/
 ## ✅ Status
 
 * [x] Core concept defined
-* [ ] Transformer encoder training setup
-* [ ] Clustering pipeline prototype
+* [x] Data ingestion pipeline implemented
+* [x] Transformer encoder + positional encoding embedded
+* [x] Embedding pipeline operational and CLI-integrated
+* [x] Embeddings saved to `artifacts/embeddings/`
+* [ ] Spectral clustering and regime ID assignment
+* [ ] Visualization tools (UMAP, t-SNE) with cluster overlay
 * [ ] Historical regime labeling and export
-* [ ] Live regime inference module
+* [ ] Live inference support
+* [ ] Contrastive or autoregressive pretraining options
 
 ---
 
