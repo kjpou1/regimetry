@@ -44,6 +44,11 @@ class CommandLine:
             "embed", help="Generate transformer embeddings for clustering or visualization."
         )
         embed_parser.add_argument(
+            "--signal-input-path",
+            type=str,
+            help="Path to the signal-enriched input CSV file (overrides config or .env)",
+        )
+        embed_parser.add_argument(
             "--config",
             type=str,
             required=False,

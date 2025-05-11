@@ -11,6 +11,7 @@
     - [2. **Embedding Pipeline**](#2-embedding-pipeline)
     - [3. **Clustering**](#3-clustering)
     - [4. **Visualization \& Interpretation**](#4-visualization--interpretation)
+  - [🧪 Example Dataset](#-example-dataset)
   - [🛠 Project Structure](#-project-structure)
   - [🧭 Orientation Going Forward](#-orientation-going-forward)
   - [✅ Status](#-status)
@@ -61,6 +62,31 @@ Formally:
 - Use t-SNE or UMAP to project embeddings  
 - Visualize regime transitions over time  
 - Map regimes back to chart or signal data for strategy insights
+
+---
+
+## 🧪 Example Dataset
+
+An example file is included at [`examples/EUR_USD_processed_signals.csv`](examples/EUR_USD_processed_signals.csv) to help you test the pipeline immediately.
+
+This file contains:
+- Processed technical indicators (AHMA, LP, LC, ATR, etc.)
+- Cleaned and aligned daily bars for EUR/USD
+- A ready-to-ingest format compatible with the full `embedding_pipeline`
+
+You can run the **ingestion pipeline** on this dataset:
+
+```bash
+python run.py ingest --signal-input-path examples/EUR_USD_processed_signals.csv
+````
+
+— OR —
+
+Run the **embedding pipeline** to generate transformer embeddings:
+
+```bash
+python run.py embed --signal-input-path examples/EUR_USD_processed_signals.csv
+```
 
 ---
 
