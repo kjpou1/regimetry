@@ -13,6 +13,6 @@ include_columns: "*"
   # - Close
   # - ATR
   # - AHMA
-exclude_columns: []
+exclude_columns: ["Date", "Hour"]
 #   - Predictions
 #   - Confidence

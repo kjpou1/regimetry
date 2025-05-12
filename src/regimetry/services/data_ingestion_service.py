@@ -40,22 +40,6 @@ class DataIngestionService:
             pd.DataFrame: The cleaned dataset.
         """
         try:
-            # Excluding columns based on config
-            if self.config.exclude_columns:
-                df = df.drop(columns=self.config.exclude_columns, axis=1)
-                logging.info(f"Excluding columns: {self.config.exclude_columns}")
-
-            # Including only specified columns if config is provided
-            if self.config.include_columns == "*":  # Handle the '*' case
-                logging.info("Including all columns")
-                included_columns = df.columns.tolist()  # Include all columns
-            else:
-                included_columns = [
-                    col for col in self.config.include_columns if col in df.columns
-                ]
-                df = df[included_columns]  # Only keep the specified columns
-                logging.info(f"Including columns: {included_columns}")
-                           
             df = TrendSignalService.add_trend_signals(df, self.config.rhd_threshold)
             logging.info("Added trend signal flags.")
 
@@ -76,6 +60,22 @@ class DataIngestionService:
 
             if df.isnull().all().sum() > 0:
                 raise DataProcessingError("All rows contain NaNs after processing!")
+
+            # Excluding columns based on config
+            if self.config.exclude_columns:
+                df = df.drop(columns=self.config.exclude_columns, axis=1)
+                logging.info(f"Excluding columns: {self.config.exclude_columns}")
+
+            # Including only specified columns if config is provided
+            if self.config.include_columns == "*":  # Handle the '*' case
+                logging.info("Including all columns")
+                included_columns = df.columns.tolist()  # Include all columns
+            else:
+                included_columns = [
+                    col for col in self.config.include_columns if col in df.columns
+                ]
+                df = df[included_columns]  # Only keep the specified columns
+                logging.info(f"Including columns: {included_columns}")
 
 
             return df

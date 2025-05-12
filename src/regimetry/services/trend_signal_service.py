@@ -79,4 +79,12 @@ class TrendSignalService:
         df.drop(columns=["Strong_RHD_Bull", "Strong_RHD_Bear", "Moderate_RHD_Bull", "Moderate_RHD_Bear", 
                         "Weak_RHD_Bull", "Weak_RHD_Bear"], inplace=True)
         
+        # Parse 'Date' as datetime if it exists
+        if 'Date' in df.columns:
+            df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+            df['Hour'] = df['Date'].dt.hour
+            df['Day_Of_Week'] = df['Date'].dt.dayofweek
+            df['Month'] = df['Date'].dt.month
+            df['Year'] = df['Date'].dt.year
+
         return df

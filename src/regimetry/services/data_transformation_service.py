@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import FunctionTransformer, Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from regimetry.config.config import Config
@@ -30,60 +30,93 @@ class DataTransformationService:
         self.config = Config()
         self.transformation_config = DataTransformationConfig()
 
-    def get_data_transformer_object(self, train_df: pd.DataFrame) -> ColumnTransformer:
+    def get_data_transformer_object(self, input_df: pd.DataFrame, use_cyclical_encoding=False) -> ColumnTransformer:
         """
         Builds a column-wise transformation pipeline for numerical and categorical data.
+        Applies sine/cosine encoding to 'Hour' if specified.
 
         Args:
-            train_df (pd.DataFrame): Dataset to derive feature types and fit transformers on.
+            input_df (pd.DataFrame): The dataset used to derive feature types and fit transformers.
+            use_cyclical_encoding (bool): If True, encodes 'Hour' using sine/cosine.
 
         Returns:
-            Tuple:
-                - ColumnTransformer: The preprocessing object.
-                - List[str]: The final list of included features.
+            ColumnTransformer: The preprocessing object.
         """
         try:
-            all_columns = train_df.columns.tolist()
+            all_columns = input_df.columns.tolist()
 
-            # Determine which columns to include based on config
+            # Determine columns to include
             if self.config.include_columns == "*":
                 columns_to_include = all_columns
             else:
                 columns_to_include = [col for col in self.config.include_columns if col in all_columns]
 
-            # Remove excluded columns, if any
+            # Remove excluded columns
             if self.config.exclude_columns:
                 columns_to_include = [col for col in columns_to_include if col not in self.config.exclude_columns]
 
             logging.info(f"Including columns: {columns_to_include}")
             logging.info(f"Excluding columns: {self.config.exclude_columns}")
 
-            # Split into numeric and categorical columns
-            numerical_columns = [col for col in columns_to_include if train_df[col].dtype in ['float64', 'int64']]
-            categorical_columns = [col for col in columns_to_include if train_df[col].dtype == 'object']
+            # Identify numerical and categorical columns
+            numerical_columns = [col for col in columns_to_include if input_df[col].dtype in ['float64', 'int64']]
+            categorical_columns = [col for col in columns_to_include if input_df[col].dtype == 'object']
 
-            # Define pipeline for numerical features
-            num_pipeline = Pipeline(steps=[
+            # Handle 'Hour' column separately for cyclical encoding
+            hour_transform = None
+            if 'Hour' in columns_to_include:
+                if use_cyclical_encoding:
+                    def cyclic_transform(X):
+                        """
+                        Converts hour-of-day into sine and cosine components to preserve cyclical nature.
+                        Example: hour 0 and 23 should be near each other in feature space.
+                        """
+                        radians = 2 * np.pi * X / 24
+                        return pd.DataFrame({
+                            "Hour_sin": np.sin(radians).flatten(),
+                            "Hour_cos": np.cos(radians).flatten()
+                        })
+
+                    hour_transform = ("hour_pipeline", Pipeline([
+                        ("cyclic_transform", FunctionTransformer(cyclic_transform, validate=False)),
+                        ("scaler", StandardScaler())
+                    ]), ["Hour"])
+
+                    columns_to_include.remove("Hour")
+                    if "Hour" in numerical_columns:
+                        numerical_columns.remove("Hour")
+                    if "Hour" in categorical_columns:
+                        categorical_columns.remove("Hour")
+                else:
+                    categorical_columns.append("Hour")
+
+            # Define transformation pipelines
+            num_pipeline = Pipeline([
                 ("imputer", SimpleImputer(strategy="median")),
                 ("scaler", StandardScaler())
             ])
 
-            # Define pipeline for categorical features
             cat_pipeline = Pipeline([
                 ("imputer", SimpleImputer(strategy="most_frequent")),
                 ("one_hot_encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False))
             ])
 
-            # Combine into a column transformer
-            preprocessor = ColumnTransformer(transformers=[
+            # Build final transformer
+            transformers = [
                 ("num_pipeline", num_pipeline, numerical_columns),
                 ("cat_pipeline", cat_pipeline, categorical_columns)
-            ])
+            ]
+
+            if hour_transform:
+                transformers.append(hour_transform)
+
+            preprocessor = ColumnTransformer(transformers)
 
             return preprocessor
 
         except Exception as e:
             raise CustomException(e, sys) from e
+
 
     def initiate_data_transformation(self):
         """
