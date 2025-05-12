@@ -27,10 +27,9 @@ class EmbeddingPipeline:
     Embedding pipeline to transform raw data into windowed transformer embeddings.
     """
 
-    def __init__(self, val_size: float = 0.2, test_size: float = 0.2):
+    def __init__(self, window_size: int = 30):
         self.config = Config()
-        self.test_size = test_size
-        self.val_size = val_size
+        self.window_size = window_size  # No need for val_size, test_size here anymore
         self.data_ingestion_service = DataIngestionService()
         self.data_transformation_service = DataTransformationService()
 
@@ -40,22 +39,21 @@ class EmbeddingPipeline:
 
             # STEP 1: Data Ingestion
             logging.info("📥 Running data ingestion service.")
-            train_path, val_path, test_path, feature_metadata = self.data_ingestion_service.initiate_data_ingestion(
-                val_size=self.val_size,
-                test_size=self.test_size
-            )
-            logging.info(f"📁 Ingested paths: train={train_path}, val={val_path}, test={test_path}")
+            # Use the single 'regime_input.csv' file for all
+            full_data_path, feature_metadata = self.data_ingestion_service.initiate_data_ingestion()
+            logging.info(f"📁 Ingested full dataset: {full_data_path}")
 
             # STEP 2: Data Transformation
             logging.info("🔄 Running data transformation.")
-            train_arr, _, preprocessor_obj = self.data_transformation_service.initiate_data_transformation()
+            # No validation split here, just use the full dataset
+            full_data_arr, preprocessor_obj = self.data_transformation_service.initiate_data_transformation()
             logging.info("✅ Data transformed.")
 
-            if hasattr(train_arr, "toarray"):
-                train_arr = train_arr.toarray()
+            if hasattr(full_data_arr, "toarray"):
+                full_data_arr = full_data_arr.toarray()
 
             # STEP 3: Rolling Window Generation
-            window_gen = RollingWindowGenerator(data=train_arr, window_size=30)
+            window_gen = RollingWindowGenerator(data=full_data_arr, window_size=self.window_size)
             rolling_windows = window_gen.generate()
             logging.info(f"🧊 Rolling windows shape: {rolling_windows.shape}")
 
@@ -64,8 +62,7 @@ class EmbeddingPipeline:
             X_pe_final = PositionalEncoding.add(
                 X,
                 method='sinusoidal',  # or 'learnable'
-                #encoding_style='stacked'  # or 'interleaved'
-                encoding_style='interleaved'  # or 'interleaved'
+                encoding_style='interleaved'  # or 'stacked'
             )
             logging.info(f"📐 Positional encoding applied: shape={X_pe_final.shape}")
 
@@ -79,13 +76,12 @@ class EmbeddingPipeline:
             save_array(embeddings, filepath)
             logging.info(f"✅ Embeddings saved: {filepath}")
 
-
             # Save embedding metadata (alongside the .npy file)
             metadata_path = save_embedding_metadata(
                 embeddings=embeddings,
                 output_path=filepath,
                 features_used=preprocessor_obj.get_feature_names_out().tolist(),
-                window_size=30,
+                window_size=self.window_size,
                 stride=1,
                 encoding_method="sinusoidal",
                 encoding_style="stacked",
@@ -94,9 +90,8 @@ class EmbeddingPipeline:
             )
             logging.info(f"📄 Metadata saved: {metadata_path}")
 
-            
             return {
-                "ingested_shape": train_arr.shape,
+                "ingested_shape": full_data_arr.shape,
                 "rolling_windows_shape": rolling_windows.shape,
                 "encoded_shape": X_pe_final.shape,
                 "embeddings": embeddings,
@@ -105,4 +100,5 @@ class EmbeddingPipeline:
         except Exception as e:
             logging.error(f"❌ Error in embedding pipeline: {e}")
             raise CustomException(e, sys) from e
+
 

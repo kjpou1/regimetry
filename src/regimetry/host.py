@@ -98,9 +98,7 @@ class Host:
         result = pipeline.run()
 
         logging.info("Ingestion pipeline result:")
-        logging.info(f"  Train: {result['train_path']}")
-        logging.info(f"  Val:   {result['val_path']}")
-        logging.info(f"  Test:  {result['test_path']}")
+        logging.info(f"  Full Dataset: {result['output_path']}")
         logging.info(f"  Features: {result['features']}")
 
 
@@ -109,7 +107,7 @@ class Host:
         Execute the model training workflow by calling the model training service.
         """
         try:
-            train_pipeline = EmbeddingPipeline(val_size=0.2, test_size=0.2)
+            train_pipeline = EmbeddingPipeline()
             train_pipeline.run_pipeline()
 
         except Exception as e:

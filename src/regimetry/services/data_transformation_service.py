@@ -15,12 +15,14 @@ from regimetry.utils.file_utils import save_object
 
 logging = LoggerManager.get_logger(__name__)
 
+
 class DataTransformationService:
     """
     Handles all data transformation logic, including:
     - Selecting valid columns based on config
     - Building and applying a preprocessing pipeline
     - Returning transformed arrays ready for model input (e.g., for transformer embedding)
+    - Supports cyclical encoding for 'Hour'
     """
 
     def __init__(self):
@@ -45,7 +47,7 @@ class DataTransformationService:
         try:
             all_columns = input_df.columns.tolist()
 
-            # Determine columns to include
+            # Determine which columns to include
             if self.config.include_columns == "*":
                 columns_to_include = all_columns
             else:
@@ -58,11 +60,11 @@ class DataTransformationService:
             logging.info(f"Including columns: {columns_to_include}")
             logging.info(f"Excluding columns: {self.config.exclude_columns}")
 
-            # Identify numerical and categorical columns
+            # Identify feature types
             numerical_columns = [col for col in columns_to_include if input_df[col].dtype in ['float64', 'int64']]
             categorical_columns = [col for col in columns_to_include if input_df[col].dtype == 'object']
 
-            # Handle 'Hour' column separately for cyclical encoding
+            # Handle cyclical encoding for 'Hour'
             hour_transform = None
             if 'Hour' in columns_to_include:
                 if use_cyclical_encoding:
@@ -82,6 +84,7 @@ class DataTransformationService:
                         ("scaler", StandardScaler())
                     ]), ["Hour"])
 
+                    # Remove Hour from normal processing
                     columns_to_include.remove("Hour")
                     if "Hour" in numerical_columns:
                         numerical_columns.remove("Hour")
@@ -101,7 +104,7 @@ class DataTransformationService:
                 ("one_hot_encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False))
             ])
 
-            # Build final transformer
+            # Combine all transformers
             transformers = [
                 ("num_pipeline", num_pipeline, numerical_columns),
                 ("cat_pipeline", cat_pipeline, categorical_columns)
@@ -111,65 +114,44 @@ class DataTransformationService:
                 transformers.append(hour_transform)
 
             preprocessor = ColumnTransformer(transformers)
-
             return preprocessor
 
         except Exception as e:
             raise CustomException(e, sys) from e
 
-
-    def initiate_data_transformation(self):
+    def initiate_data_transformation(self, save=True):
         """
-        Loads the train and validation datasets, applies preprocessing, and returns transformed arrays.
+        Loads the full dataset, applies preprocessing, and returns transformed data and fitted preprocessor.
 
         Returns:
             Tuple:
-                - np.ndarray: Transformed training data
-                - np.ndarray: Transformed validation data
-                - ColumnTransformer: The fitted preprocessing object
-                - List[str]: Final set of features used
+                - np.ndarray: Transformed data array
+                - ColumnTransformer: Fitted preprocessor object
         """
         try:
-            train_df = pd.read_csv(self.transformation_config.train_data_path)
-            validation_df = pd.read_csv(self.transformation_config.validation_data_path)
+            # Load full dataset (regime_input.csv)
+            df = pd.read_csv(self.transformation_config.input_data_path)
+            logging.info("📁 Loaded full dataset for transformation.")
 
-            logging.info("📁 Loaded train and validation datasets.")
-            logging.info("🔧 Creating preprocessing pipeline.")
+            # Create preprocessing pipeline based on data schema
+            preprocessing_obj = self.get_data_transformer_object(df)
 
-            preprocessing_obj = self.get_data_transformer_object(train_df)
+            # Fit and transform the entire dataset
+            logging.info("⚙️ Fitting and transforming dataset.")
+            transformed_array = preprocessing_obj.fit_transform(df)
 
-            logging.info("⚙️ Applying transformation to training and validation data.")
+            logging.info("✅ Full dataset transformation complete.")
+            logging.info(f"🔢 Transformed shape: {transformed_array.shape}")
 
-            input_feature_train_arr = preprocessing_obj.fit_transform(train_df)
-            input_feature_validation_arr = preprocessing_obj.transform(validation_df)
+            # Save preprocessor if configured
+            if save:
+                save_object(
+                    file_path=self.transformation_config.transformer_object_path,
+                    obj=preprocessing_obj
+                )
+                logging.info(f"💾 Preprocessor saved to: {self.transformation_config.transformer_object_path}")
 
-            logging.info("✅ Data transformation complete.")
-            logging.info(f"🔢 Train shape: {input_feature_train_arr.shape}")
-            logging.info(f"🔢 Validation shape: {input_feature_validation_arr.shape}")
-
-            return input_feature_train_arr, input_feature_validation_arr, preprocessing_obj
-
-        except Exception as e:
-            raise CustomException(e, sys) from e
-
-    def initiate_data_transformation_for_test(
-        self, test_df: pd.DataFrame, preprocessing_obj: ColumnTransformer
-    ) -> np.ndarray:
-        """
-        Applies a saved preprocessor to transform new (e.g., test) data.
-
-        Args:
-            test_df (pd.DataFrame): The test dataset to transform.
-            preprocessing_obj (ColumnTransformer): Pre-fitted preprocessing object.
-
-        Returns:
-            np.ndarray: Transformed test data.
-        """
-        try:
-            logging.info("📥 Transforming test dataset.")
-            input_feature_test_arr = preprocessing_obj.transform(test_df)
-            logging.info("✅ Test data transformation complete.")
-            return input_feature_test_arr
+            return transformed_array, preprocessing_obj
 
         except Exception as e:
             raise CustomException(e, sys) from e

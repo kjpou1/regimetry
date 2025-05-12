@@ -22,6 +22,8 @@ transformers = "*"
 python-dotenv = "^1.1.0"
 dill = "^0.4.0"
 tensorflow = "^2.19.0"
+plotly = "^6.0.1"
+nbformat = "^5.10.4"
 
 
 [build-system]

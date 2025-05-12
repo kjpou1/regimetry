@@ -42,6 +42,7 @@ class Config(metaclass=SingletonMeta):
         self.REPORTS_DIR = os.path.join(self.BASE_DIR, "reports")
         self.PROCESSED_DATA_DIR = os.path.join(self.BASE_DIR, "data", "processed")
         self.EMBEDDINGS_DIR = os.path.join(self.BASE_DIR, "embeddings")
+        self.TRANSFORMER_DIR = os.path.join(self.BASE_DIR, "transformer")
 
         self._signal_input_path = os.getenv("SIGNAL_INPUT_PATH", os.path.join(self.RAW_DATA_DIR, "signal_input.csv"))
         self._output_name = os.getenv("OUTPUT_NAME", "embeddings.npy")
@@ -60,6 +61,7 @@ class Config(metaclass=SingletonMeta):
             self.RAW_DATA_DIR,
             self.PROCESSED_DATA_DIR,
             self.EMBEDDINGS_DIR,
+            self.TRANSFORMER_DIR,
             self.MODEL_DIR,
             self.LOG_DIR,
             self.REPORTS_DIR,

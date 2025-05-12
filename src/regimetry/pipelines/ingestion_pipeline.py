@@ -22,20 +22,13 @@ class IngestionPipeline:
 
         ingestion_service = DataIngestionService()
 
-        train_path, val_path, test_path, feature_metadata = ingestion_service.initiate_data_ingestion(
-            val_size=self.val_size,
-            test_size=self.test_size
-        )
+        output_path, feature_metadata = ingestion_service.initiate_data_ingestion()
 
         logging.info("✅ Ingestion pipeline completed.")
-        logging.info(f"Train set saved to: {train_path}")
-        logging.info(f"Validation set saved to: {val_path}")
-        logging.info(f"Test set saved to: {test_path}")
+        logging.info(f"Full dataset saved to: {output_path}")
         logging.info(f"Identified features: {feature_metadata}")
 
         return {
-            "train_path": train_path,
-            "val_path": val_path,
-            "test_path": test_path,
+            "output_path": output_path,
             "features": feature_metadata
         }
