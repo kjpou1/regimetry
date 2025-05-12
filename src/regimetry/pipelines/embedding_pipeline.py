@@ -15,7 +15,7 @@ from regimetry.models.rolling_windows_generator import RollingWindowGenerator
 from regimetry.services.data_ingestion_service import DataIngestionService
 from regimetry.services.data_transformation_service import DataTransformationService
 from regimetry.services.model_embedding_service import ModelEmbeddingService
-from regimetry.utils.file_utils import save_array
+from regimetry.utils.file_utils import save_array, save_embedding_metadata
 from regimetry.utils.utils import inspect_transformed_output, print_feature_block
 
 import tensorflow as tf
@@ -64,7 +64,8 @@ class EmbeddingPipeline:
             X_pe_final = PositionalEncoding.add(
                 X,
                 method='sinusoidal',  # or 'learnable'
-                encoding_style='stacked'  # or 'interleaved'
+                #encoding_style='stacked'  # or 'interleaved'
+                encoding_style='interleaved'  # or 'interleaved'
             )
             logging.info(f"📐 Positional encoding applied: shape={X_pe_final.shape}")
 
@@ -78,6 +79,20 @@ class EmbeddingPipeline:
             save_array(embeddings, filepath)
             logging.info(f"✅ Embeddings saved: {filepath}")
 
+
+            # Save embedding metadata (alongside the .npy file)
+            metadata_path = save_embedding_metadata(
+                embeddings=embeddings,
+                output_path=filepath,
+                features_used=preprocessor_obj.get_feature_names_out().tolist(),
+                window_size=30,
+                stride=1,
+                encoding_method="sinusoidal",
+                encoding_style="stacked",
+                embedding_model="UnsupervisedTransformerEncoder",
+                source_file=self.config.signal_input_path,
+            )
+            logging.info(f"📄 Metadata saved: {metadata_path}")
 
             
             return {

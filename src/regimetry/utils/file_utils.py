@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from datetime import datetime
 
 import dill  # Serialization library for Python objects
 import numpy as np
@@ -169,3 +170,60 @@ def load_array(file_path: str) -> np.ndarray:
     except Exception as e:
         logging.error(f"Failed to load array from {file_path}. Error: {e}")
         raise CustomException(e, sys) from e
+
+
+def save_embedding_metadata(
+    embeddings,
+    output_path,
+    features_used,
+    window_size,
+    stride=1,
+    encoding_method="sinusoidal",
+    encoding_style="stacked",
+    embedding_model="UnsupervisedTransformerEncoder",
+    source_file=None,
+    date_range=None,
+):
+    """
+    Save metadata associated with the embedding `.npy` file.
+
+    Args:
+        embeddings (np.ndarray): The final embedding array.
+        output_path (str): Path to the `.npy` file (used to derive `.json` path).
+        features_used (list): List of input feature names.
+        window_size (int): Size of the rolling window used.
+        stride (int): Stride used during rolling.
+        encoding_method (str): 'sinusoidal', 'learnable', etc.
+        encoding_style (str): 'stacked' or 'interleaved'.
+        embedding_model (str): Name of the encoder model used.
+        source_file (str, optional): Name of the source signal file.
+        date_range (list, optional): Start and end date range as strings.
+
+    Returns:
+        str: Path to saved metadata file.
+    """
+    metadata = {
+        "window_size": window_size,
+        "stride": stride,
+        "features_used": features_used,
+        "encoding_method": encoding_method,
+        "encoding_style": encoding_style,
+        "embedding_model": embedding_model,
+        "embedding_dim": embeddings.shape[1],
+        "n_samples": embeddings.shape[0],
+        "saved_at": datetime.utcnow().isoformat() + "Z",
+    }
+
+    if source_file:
+        metadata["source_file"] = os.path.basename(source_file)
+
+    if date_range:
+        metadata["date_range"] = date_range
+
+    metadata_path = os.path.splitext(output_path)[0] + "_metadata.json"
+
+    os.makedirs(os.path.dirname(metadata_path), exist_ok=True)
+    with open(metadata_path, "w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=4)
+
+    return metadata_path
