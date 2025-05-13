@@ -1,7 +1,23 @@
+"""
+RegimeClusteringPipeline
+
+This pipeline performs unsupervised market regime detection using precomputed
+transformer embeddings. It applies clustering, dimensionality reduction, 
+and generates rich visual reports to help interpret structural market behaviors.
+
+Steps:
+1. Load embeddings
+2. Standardize embeddings
+3. Cluster via Spectral Clustering
+4. Reduce dimensions via t-SNE and UMAP
+5. Attach cluster labels to original data
+6. Save merged regime-labeled CSV
+7. Generate visualizations via ClusteringReportService
+"""
+
 import os
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from sklearn.cluster import SpectralClustering
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
@@ -9,12 +25,17 @@ from umap import UMAP
 
 from regimetry.config.config import Config
 from regimetry.logger_manager import LoggerManager
+from regimetry.services.clustering_report_service import ClusteringReportService
 
 logging = LoggerManager.get_logger(__name__)
 
 
 class RegimeClusteringPipeline:
     def __init__(self):
+        """
+        Initializes the clustering pipeline using configuration values.
+        Prepares input paths and ensures the output directory exists.
+        """
         self.config = Config()
 
         self.embedding_path = self.config.embedding_path
@@ -26,17 +47,25 @@ class RegimeClusteringPipeline:
         os.makedirs(self.output_dir, exist_ok=True)
 
     def run(self):
+        """
+        Executes the full clustering pipeline:
+        - Loads embeddings
+        - Applies clustering
+        - Reduces dimensions
+        - Aligns and saves cluster-labeled data
+        - Generates visualization reports
+        """
         logging.info("🚀 Starting regime clustering pipeline")
 
         # STEP 1: Load embeddings
         embeddings = np.load(self.embedding_path)
         logging.info(f"📥 Loaded embeddings: shape={embeddings.shape}")
 
-        # STEP 2: Scale embeddings
+        # STEP 2: Standardize the embeddings before clustering
         scaler = StandardScaler()
         embeddings_scaled = scaler.fit_transform(embeddings)
 
-        # STEP 3: Apply Spectral Clustering
+        # STEP 3: Apply Spectral Clustering to discover regime clusters
         spectral = SpectralClustering(
             n_clusters=self.n_clusters,
             affinity='nearest_neighbors',
@@ -46,80 +75,36 @@ class RegimeClusteringPipeline:
         cluster_labels = spectral.fit_predict(embeddings_scaled)
         logging.info("🔗 Spectral clustering complete.")
 
-        # STEP 4: Dimensionality Reduction
+        # STEP 4: Reduce dimensions for visualization
         tsne = TSNE(n_components=2, perplexity=30, n_iter=1000, random_state=42)
         tsne_coords = tsne.fit_transform(embeddings_scaled)
 
         umap = UMAP(n_components=2, random_state=42)
         umap_coords = umap.fit_transform(embeddings_scaled)
 
-        # STEP 5: Load raw data and attach cluster labels
+        # STEP 5: Load original regime data and attach cluster labels
         df = pd.read_csv(self.regime_data_path)
         df['Cluster_ID'] = np.nan
-        df['Cluster_ID'] = pd.Series(cluster_labels, index=range(self.window_size - 1, self.window_size - 1 + len(cluster_labels)))
-        df['Cluster_ID'] = df['Cluster_ID'].astype('Int64')  # keep nulls for early rows
 
-        # STEP 6: Save merged CSV
+        # Align clusters starting from (window_size - 1) index
+        df['Cluster_ID'] = pd.Series(
+            cluster_labels,
+            index=range(self.window_size - 1, self.window_size - 1 + len(cluster_labels))
+        )
+        df['Cluster_ID'] = df['Cluster_ID'].astype('Int64')  # Preserve NaNs
+
+        # STEP 6: Save merged regime-labeled dataset
         cluster_path = os.path.join(self.output_dir, "cluster_assignments.csv")
         df.to_csv(cluster_path, index=False)
         logging.info(f"💾 Cluster assignments saved: {cluster_path}")
 
-        # STEP 7: Visualizations
-        self.plot_scatter(tsne_coords, cluster_labels, "t-SNE", "tsne_plot.png")
-        self.plot_scatter(umap_coords, cluster_labels, "UMAP", "umap_plot.png")
-        self.plot_timeline(cluster_labels, "timeline.png")
-        self.plot_overlay(df, "Close", cluster_labels, "price_overlay.png")
-
-        return df
-
-    def plot_scatter(self, coords, labels, title, filename):
-        plt.figure(figsize=(10, 6))
-        scatter = plt.scatter(coords[:, 0], coords[:, 1], c=labels, cmap='tab10', edgecolors='k', alpha=0.8)
-        plt.title(f"{title} Visualization Colored by Spectral Clustering")
-        plt.xlabel(f"{title} Component 1")
-        plt.ylabel(f"{title} Component 2")
-        plt.colorbar(scatter, label="Cluster ID")
-        plt.grid(True)
-        plt.tight_layout()
-        plt.savefig(os.path.join(self.output_dir, filename))
-        plt.close()
-        logging.info(f"📊 {title} plot saved: {filename}")
-
-    def plot_timeline(self, labels, filename):
-        plt.figure(figsize=(14, 4))
-        plt.plot(labels, marker='o')
-        plt.title("Cluster Regimes Over Time")
-        plt.xlabel("Time Index")
-        plt.ylabel("Cluster ID")
-        plt.grid(True)
-        plt.tight_layout()
-        plt.savefig(os.path.join(self.output_dir, filename))
-        plt.close()
-        logging.info(f"📈 Timeline plot saved: {filename}")
-
-    def plot_overlay(self, df, price_col, labels, filename):
-        df_filtered = df.dropna(subset=['Cluster_ID'])
-
-        plt.figure(figsize=(14, 6))
-        plt.plot(df_filtered[price_col].values, label='Price', color='black', alpha=0.7)
-
-        scatter = plt.scatter(
-            df_filtered.index,
-            df_filtered[price_col],
-            c=df_filtered['Cluster_ID'],
-            cmap='tab10',
-            edgecolors='none',   # Removed black borders for cleaner look
-            s=16,                # Slightly smaller marker size
-            alpha=0.75           # Transparent to reduce clutter
+        # STEP 7: Generate scatter/timeline/overlay plots
+        report_service = ClusteringReportService(output_dir=self.output_dir)
+        report_service.generate_all(
+            df=df,
+            cluster_labels=cluster_labels,
+            tsne_coords=tsne_coords,
+            umap_coords=umap_coords,
         )
 
-        plt.colorbar(scatter, label="Cluster ID")
-        plt.title("Close Price with Cluster Overlay")
-        plt.xlabel("Time Index")
-        plt.ylabel("Price")
-        plt.grid(True)
-        plt.tight_layout()
-        plt.savefig(os.path.join(self.output_dir, filename))
-        plt.close()
-
-        logging.info(f"📉 Price overlay saved: {filename}")
+        return df
