@@ -21,7 +21,8 @@
       - [🔹 Ingest Data](#-ingest-data)
     - [🔹 Generate Embeddings](#-generate-embeddings)
       - [🛠 Available CLI Arguments for `embed`](#-available-cli-arguments-for-embed)
-      - [🔹 Cluster Regimes](#-cluster-regimes)
+    - [🔹 Cluster Regimes](#-cluster-regimes)
+      - [🛠 Available CLI Arguments for `cluster`](#-available-cli-arguments-for-cluster)
   - [🧪 Example Dataset](#-example-dataset)
   - [🛠 Project Structure](#-project-structure)
   - [🧭 Orientation Going Forward](#-orientation-going-forward)
@@ -127,9 +128,9 @@ This will:
 | `--config`            | Optional YAML config path to override pipeline settings                         |
 | `--debug`             | Enable debug logging                                                            |
 
+---
 
-
-#### 🔹 Cluster Regimes
+### 🔹 Cluster Regimes
 
 ```bash
 python run.py cluster \
@@ -143,15 +144,28 @@ python run.py cluster \
 This will:
 
 * Load precomputed transformer embeddings
-* Run Spectral Clustering to assign regime IDs
-* Generate visualizations (t-SNE, UMAP, timeline, chart overlays)
-* Save results to the specified output directory
+* Apply spectral clustering to assign regime IDs
+* Align cluster labels with original time-series data (using `window_size` for offset)
+* Generate visualizations (t-SNE, UMAP, timeline, and price overlay)
+* Save outputs to the specified report directory
 
-> You can also run this with a config file:
->
-> ```bash
-> python run.py cluster --config configs/cluster_config.yaml
-> ```
+> ⚠️ **Note:** The `window_size` used here **must match** the one used during embedding.
+> Otherwise, the cluster labels will not align correctly with the input time series.
+
+---
+
+#### 🛠 Available CLI Arguments for `cluster`
+
+| Argument             | Description                                                                    |
+| -------------------- | ------------------------------------------------------------------------------ |
+| `--embedding-path`   | Path to the `.npy` file with saved embeddings                                  |
+| `--regime-data-path` | CSV file containing the signal-enriched time series (e.g., `regime_input.csv`) |
+| `--output-dir`       | Directory to save visualizations and labeled data                              |
+| `--window-size`      | Window size used during embedding (used for alignment)                         |
+| `--n-clusters`       | Number of regimes (clusters) to detect (default: `3`)                          |
+| `--config`           | Optional YAML config file to provide all arguments at once                     |
+| `--debug`            | Enable debug logging                                                           |
+
 
 
 ---
