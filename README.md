@@ -95,15 +95,16 @@ This will:
 * Normalize and structure features
 * Save the result to `artifacts/data/processed/`
 
-
 ### 🔹 Generate Embeddings
 
 ```bash
 python run.py embed \
   --signal-input-path examples/EUR_USD_processed_signals.csv \
   --output-name EUR_USD_embeddings.npy \
-  --window-size 45 \
-  --stride 5
+  --window-size 30 \
+  --stride 1 \
+  --encoding-method sinusoidal \
+  --encoding-style interleaved
 ```
 
 This will:
@@ -125,10 +126,16 @@ This will:
 | `--output-name`       | Optional output file name for the `.npy` embeddings (default: `embeddings.npy`) |
 | `--window-size`       | Number of time steps per rolling window (default: `30`)                         |
 | `--stride`            | Step size between rolling windows (default: `1`)                                |
+| `--encoding-method`   | `sinusoidal` (default) or `learnable`                                           |
+| `--encoding-style`    | `interleaved` (default) or `stacked` (only used if method is `sinusoidal`)      |
+| `--embedding-dim`     | Required if using `learnable` encoding (defines learnable position dimension)   |
 | `--config`            | Optional YAML config path to override pipeline settings                         |
 | `--debug`             | Enable debug logging                                                            |
 
----
+> ⚠️ **Note:** `--embedding-dim` is **only used** with `--encoding-method=learnable`.
+> If specified with `sinusoidal`, it will be ignored with a warning.
+
+
 
 ### 🔹 Cluster Regimes
 
@@ -165,7 +172,6 @@ This will:
 | `--n-clusters`       | Number of regimes (clusters) to detect (default: `3`)                          |
 | `--config`           | Optional YAML config file to provide all arguments at once                     |
 | `--debug`            | Enable debug logging                                                           |
-
 
 
 ---
