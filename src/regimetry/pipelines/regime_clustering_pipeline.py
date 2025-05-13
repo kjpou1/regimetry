@@ -56,7 +56,7 @@ class RegimeClusteringPipeline:
         # STEP 5: Load raw data and attach cluster labels
         df = pd.read_csv(self.regime_data_path)
         df['Cluster_ID'] = np.nan
-        df.loc[self.window_size - 1 : self.window_size - 1 + len(cluster_labels), 'Cluster_ID'] = cluster_labels
+        df['Cluster_ID'] = pd.Series(cluster_labels, index=range(self.window_size - 1, self.window_size - 1 + len(cluster_labels)))
         df['Cluster_ID'] = df['Cluster_ID'].astype('Int64')  # keep nulls for early rows
 
         # STEP 6: Save merged CSV
@@ -99,15 +99,21 @@ class RegimeClusteringPipeline:
 
     def plot_overlay(self, df, price_col, labels, filename):
         df_filtered = df.dropna(subset=['Cluster_ID'])
+
         plt.figure(figsize=(14, 6))
         plt.plot(df_filtered[price_col].values, label='Price', color='black', alpha=0.7)
-        plt.scatter(
+
+        scatter = plt.scatter(
             df_filtered.index,
             df_filtered[price_col],
             c=df_filtered['Cluster_ID'],
             cmap='tab10',
-            edgecolors='k'
+            edgecolors='none',   # Removed black borders for cleaner look
+            s=16,                # Slightly smaller marker size
+            alpha=0.75           # Transparent to reduce clutter
         )
+
+        plt.colorbar(scatter, label="Cluster ID")
         plt.title("Close Price with Cluster Overlay")
         plt.xlabel("Time Index")
         plt.ylabel("Price")
@@ -115,4 +121,5 @@ class RegimeClusteringPipeline:
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_dir, filename))
         plt.close()
+
         logging.info(f"📉 Price overlay saved: {filename}")

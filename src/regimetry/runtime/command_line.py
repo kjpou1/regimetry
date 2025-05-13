@@ -133,7 +133,7 @@ class CommandLine:
         cluster_parser.add_argument(
             "--n-clusters",
             type=int,
-            default=3,
+            default=None,
             help="Number of clusters for spectral clustering.",
         )
         cluster_parser.add_argument(
@@ -166,7 +166,7 @@ class CommandLine:
             output_dir=getattr(args, "output_dir", None),
             window_size=getattr(args, "window_size", None),  # Leave as None to allow Config fallback
             stride=getattr(args, "stride", None),
-            n_clusters=getattr(args, "n_clusters", 3),
+            n_clusters=getattr(args, "n_clusters", None),
 
             # Positional Encoding overrides
             encoding_method=getattr(args, "encoding_method", None),

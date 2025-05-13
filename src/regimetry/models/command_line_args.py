@@ -29,7 +29,7 @@ class CommandLineArgs:
     output_dir: Optional[str] = None          # Directory to store outputs and visualizations
     window_size: Optional[int] = None         # Rolling window size used for embedding
     stride: Optional[int] = None              # Stride between rolling windows
-    n_clusters: int = 3                       # Number of clusters for spectral clustering
+    n_clusters: Optional[int] = None          # Number of clusters for spectral clustering
 
     # === Positional Encoding Overrides ===
     encoding_method: Optional[str] = None     # 'sinusoidal' or 'learnable'

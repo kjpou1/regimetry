@@ -33,11 +33,25 @@
       "args": ["embed", "--config", "configs/embedding_config.yaml"]
     },
     {
+      "name": "Embed Full",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "launch_host.py",
+      "args": ["embed", "--config", "configs/full_config.yaml"]
+    },
+    {
       "name": "Cluster",
       "type": "debugpy",
       "request": "launch",
       "program": "launch_host.py",
       "args": ["cluster", "--config", "configs/cluster_config.yaml"]
+    },
+    {
+      "name": "Cluster Full",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "launch_host.py",
+      "args": ["cluster", "--config", "configs/full_config.yaml"]
     },
 
   ]
