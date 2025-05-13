@@ -68,7 +68,7 @@ class Config(metaclass=SingletonMeta):
             self.REPORTS_DIR,
             self.HISTORY_DIR,
         ])
-        
+
     def load_from_yaml(self, path: str):
         """
         Override config values from a YAML config file.
@@ -258,9 +258,20 @@ class Config(metaclass=SingletonMeta):
             return None
         if os.path.isabs(val):
             return val
-        resolved = os.path.join(self.BASE_DIR, val)
-        print(f"[Config] Resolved relative path: {val} → {resolved}")
-        return resolved
+        # Tier 1: try resolving relative to BASE_DIR
+        base_resolved = os.path.join(self.BASE_DIR, val)
+        if os.path.exists(base_resolved):
+            print(f"[Config] Resolved (BASE_DIR): {val} → {base_resolved}")
+            return base_resolved
+        # Tier 2: try resolving relative to PROJECT_ROOT
+        root_resolved = os.path.join(self.PROJECT_ROOT, val)
+        if os.path.exists(root_resolved):
+            print(f"[Config] Resolved (PROJECT_ROOT): {val} → {root_resolved}")
+            return root_resolved
+        # Fallback: assume BASE_DIR anyway
+        fallback = base_resolved
+        print(f"[Config] Resolved (fallback to BASE_DIR): {val} → {fallback}")
+        return fallback
 
     @classmethod
     def initialize(cls):
