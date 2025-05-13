@@ -19,7 +19,8 @@
     - [4. **Visualization \& Interpretation**](#4-visualization--interpretation)
   - [📟 Command Line Usage](#-command-line-usage)
       - [🔹 Ingest Data](#-ingest-data)
-      - [🔹 Generate Embeddings](#-generate-embeddings)
+    - [🔹 Generate Embeddings](#-generate-embeddings)
+      - [🛠 Available CLI Arguments for `embed`](#-available-cli-arguments-for-embed)
       - [🔹 Cluster Regimes](#-cluster-regimes)
   - [🧪 Example Dataset](#-example-dataset)
   - [🛠 Project Structure](#-project-structure)
@@ -93,21 +94,40 @@ This will:
 * Normalize and structure features
 * Save the result to `artifacts/data/processed/`
 
-#### 🔹 Generate Embeddings
+
+### 🔹 Generate Embeddings
 
 ```bash
 python run.py embed \
   --signal-input-path examples/EUR_USD_processed_signals.csv \
-  --output-name EUR_USD_embeddings.npy
+  --output-name EUR_USD_embeddings.npy \
+  --window-size 45 \
+  --stride 5
 ```
 
 This will:
 
-* Apply rolling window and positional encoding
-* Run transformer encoder to extract dense regime embeddings
-* Save the result to `artifacts/embeddings/EUR_USD_embeddings.npy`
+* Apply a rolling window (default: 30 bars, stride: 1 unless overridden)
+* Use positional encoding and Transformer to generate embeddings
+* Save the result to `embeddings/EUR_USD_embeddings.npy`
 
-> If `--output-name` is not provided, the default file is `embeddings.npy`.
+> ⚠️ **Note:** Ensure that `window_size` is smaller than your dataset length.
+> If `window_size >= len(data)`, no embeddings will be produced.
+
+---
+
+#### 🛠 Available CLI Arguments for `embed`
+
+| Argument              | Description                                                                     |
+| --------------------- | ------------------------------------------------------------------------------- |
+| `--signal-input-path` | Path to the CSV file with feature-enriched signal data                          |
+| `--output-name`       | Optional output file name for the `.npy` embeddings (default: `embeddings.npy`) |
+| `--window-size`       | Number of time steps per rolling window (default: `30`)                         |
+| `--stride`            | Step size between rolling windows (default: `1`)                                |
+| `--config`            | Optional YAML config path to override pipeline settings                         |
+| `--debug`             | Enable debug logging                                                            |
+
+
 
 #### 🔹 Cluster Regimes
 
