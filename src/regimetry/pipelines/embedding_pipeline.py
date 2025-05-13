@@ -60,11 +60,24 @@ class EmbeddingPipeline:
 
             # STEP 4: Positional Encoding
             X = tf.convert_to_tensor(rolling_windows, dtype=tf.float32)
+
+            # Sanity check: embedding_dim required if using learnable encoding
+            if self.config.encoding_method == "learnable":
+                if not self.config.embedding_dim:
+                    raise ValueError("embedding_dim must be set when using learnable positional encoding.")
+            elif self.config.embedding_dim:
+                # Warn if user provided embedding_dim but it's not used
+                logging.warning(
+                    f"[EmbeddingPipeline] ⚠️ 'embedding_dim' ({self.config.embedding_dim}) is ignored when using sinusoidal encoding."
+                )
+
             X_pe_final = PositionalEncoding.add(
                 X,
-                method='sinusoidal',  # or 'learnable'
-                encoding_style='interleaved'  # or 'stacked'
+                method=self.config.encoding_method,
+                encoding_style=self.config.encoding_style,
+                learnable_dim=self.config.embedding_dim if self.config.encoding_method == 'learnable' else None
             )
+
             logging.info(f"📐 Positional encoding applied: shape={X_pe_final.shape}")
 
             # STEP 5: Embedding Extraction
@@ -84,8 +97,8 @@ class EmbeddingPipeline:
                 features_used=preprocessor_obj.get_feature_names_out().tolist(),
                 window_size=self.window_size,
                 stride=self.stride,
-                encoding_method="sinusoidal",
-                encoding_style="stacked",
+                encoding_method=self.config.encoding_method,
+                encoding_style=self.config.encoding_style,
                 embedding_model="UnsupervisedTransformerEncoder",
                 source_file=self.config.signal_input_path,
             )

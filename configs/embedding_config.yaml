@@ -19,3 +19,6 @@ exclude_columns: ["Date", "Hour"]
 
 window_size: 30
 stride: 1
+
+encoding_method: "sinusoidal"  # 'sinusoidal' or 'learnable'
+encoding_style: "interleaved"  # 'interleaved' or 'stacked' (only for sinusoidal)

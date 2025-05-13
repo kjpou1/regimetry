@@ -53,8 +53,12 @@ class Config(metaclass=SingletonMeta):
         self._include_columns = "*"  # Default to include all columns
         self._exclude_columns = []  # Empty list to exclude specific columns
 
-        self._window_size = 30  # default
-        self._stride = 1        # default
+        self._window_size = os.getenv("WINDOW_SIZE", 30)
+        self._stride = os.getenv("STRIDE", 1)
+
+        self._encoding_method = os.getenv("ENCODING_METHOD", "sinusoidal")
+        self._encoding_style = os.getenv("ENCODING_STYLE", "interleaved")
+        self._embedding_dim = os.getenv("EMBEDDING_DIM", None)  # or your default
 
 
         self._ensure_directories_exist()
@@ -127,7 +131,20 @@ class Config(metaclass=SingletonMeta):
         if "stride" in data:
             print(f"[Config] Overriding 'stride': {data['stride']}")
             self.stride = int(data["stride"])
-                        
+
+        if "encoding_method" in data:
+            print(f"[Config] Overriding 'encoding_method': {data['encoding_method']}")
+            self.encoding_method = data["encoding_method"]
+
+        if "encoding_style" in data:
+            print(f"[Config] Overriding 'encoding_style': {data['encoding_style']}")
+            self.encoding_style = data["encoding_style"]
+
+        if "embedding_dim" in data:
+            print(f"[Config] Overriding 'embedding_dim': {data['embedding_dim']}")
+            self.embedding_dim = int(data["embedding_dim"])
+                            
+
 
             
     @property
@@ -276,6 +293,30 @@ class Config(metaclass=SingletonMeta):
     @stride.setter
     def stride(self, value: int):
         self._stride = int(value)
+
+    @property
+    def encoding_method(self) -> str:
+        return self._encoding_method
+
+    @encoding_method.setter
+    def encoding_method(self, value: str):
+        self._encoding_method = value
+
+    @property
+    def encoding_style(self) -> str:
+        return self._encoding_style
+
+    @encoding_style.setter
+    def encoding_style(self, value: str):
+        self._encoding_style = value
+
+    @property
+    def embedding_dim(self) -> int:
+        return self._embedding_dim
+
+    @embedding_dim.setter
+    def embedding_dim(self, value: int):
+        self._embedding_dim = int(value)
 
 
     def _resolve_path(self, val: str) -> str:

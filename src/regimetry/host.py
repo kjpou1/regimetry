@@ -49,6 +49,20 @@ class Host:
         if args.stride:
             logging.info(f"Overriding stride from CLI: {args.stride}")
             self.config.stride = args.stride
+
+        if args.encoding_method:
+            logging.info(f"Overriding encoding_method from CLI: {args.encoding_method}")
+            self.config.encoding_method = args.encoding_method
+
+        if args.encoding_style:
+            logging.info(f"Overriding encoding_style from CLI: {args.encoding_style}")
+            self.config.encoding_style = args.encoding_style
+
+        if args.embedding_dim is not None:
+            logging.info(f"Overriding embedding_dim from CLI: {args.embedding_dim}")
+            self.config.embedding_dim = args.embedding_dim
+
+
                                 
 
     def run(self):

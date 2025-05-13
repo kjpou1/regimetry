@@ -61,6 +61,29 @@ class CommandLine:
             help="Stride between rolling windows (default: 1)",
         )
         embed_parser.add_argument(
+            "--encoding-method",
+            type=str,
+            choices=["sinusoidal", "learnable"],
+            default=None,
+            help="Type of positional encoding to use (default: sinusoidal)."
+        )
+
+        embed_parser.add_argument(
+            "--encoding-style",
+            type=str,
+            choices=["interleaved", "stacked"],
+            default=None,
+            help="Sinusoidal encoding style: 'interleaved' (Vaswani) or 'stacked'."
+        )
+
+        embed_parser.add_argument(
+            "--embedding-dim",
+            type=int,
+            default=None,
+            help="Dimensionality of learnable positional encoding (required if method=learnable)."
+        )
+
+        embed_parser.add_argument(
             "--config",
             type=str,
             required=False,
@@ -133,16 +156,21 @@ class CommandLine:
         return CommandLineArgs(
             command=args.command,
             config=args.config,
-            debug = getattr(args, "debug", False),
+            debug=getattr(args, "debug", False),
             signal_input_path=getattr(args, "signal_input_path", None),
             output_name=getattr(args, "output_name", None),
 
-            # Clustering args
+            # Embedding and clustering shared args
             embedding_path=getattr(args, "embedding_path", None),
             regime_data_path=getattr(args, "regime_data_path", None),
             output_dir=getattr(args, "output_dir", None),
-            window_size=getattr(args, "window_size", 30),
-            stride=getattr(args, "stride", 1),
+            window_size=getattr(args, "window_size", None),  # Leave as None to allow Config fallback
+            stride=getattr(args, "stride", None),
             n_clusters=getattr(args, "n_clusters", 3),
+
+            # Positional Encoding overrides
+            encoding_method=getattr(args, "encoding_method", None),
+            encoding_style=getattr(args, "encoding_style", None),
+            embedding_dim=getattr(args, "embedding_dim", None),
         )
 
