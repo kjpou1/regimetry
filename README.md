@@ -20,6 +20,7 @@
   - [📟 Command Line Usage](#-command-line-usage)
       - [🔹 Ingest Data](#-ingest-data)
       - [🔹 Generate Embeddings](#-generate-embeddings)
+      - [🔹 Cluster Regimes](#-cluster-regimes)
   - [🧪 Example Dataset](#-example-dataset)
   - [🛠 Project Structure](#-project-structure)
   - [🧭 Orientation Going Forward](#-orientation-going-forward)
@@ -108,6 +109,31 @@ This will:
 
 > If `--output-name` is not provided, the default file is `embeddings.npy`.
 
+#### 🔹 Cluster Regimes
+
+```bash
+python run.py cluster \
+  --embedding-path embeddings/EUR_USD_embeddings.npy \
+  --regime-data-path data/processed/regime_input.csv \
+  --output-dir reports/EUR_USD \
+  --window-size 30 \
+  --n-clusters 3
+```
+
+This will:
+
+* Load precomputed transformer embeddings
+* Run Spectral Clustering to assign regime IDs
+* Generate visualizations (t-SNE, UMAP, timeline, chart overlays)
+* Save results to the specified output directory
+
+> You can also run this with a config file:
+>
+> ```bash
+> python run.py cluster --config configs/cluster_config.yaml
+> ```
+
+
 ---
 
 ## 🧪 Example Dataset
@@ -166,10 +192,10 @@ regimetry/
 * [x] Data ingestion pipeline implemented
 * [x] Transformer encoder + positional encoding embedded
 * [x] Embedding pipeline operational and CLI-integrated
-* [x] Embeddings saved to `artifacts/embeddings/`
-* [ ] Spectral clustering and regime ID assignment
-* [ ] Visualization tools (UMAP, t-SNE) with cluster overlay
-* [ ] Historical regime labeling and export
+* [x] Embeddings saved to `embeddings/`
+* [x] Spectral clustering and regime ID assignment
+* [x] Visualization tools (UMAP, t-SNE) with cluster overlay
+* [x] Historical regime labeling and export
 * [ ] Live inference support
 * [ ] Contrastive or autoregressive pretraining options
 
