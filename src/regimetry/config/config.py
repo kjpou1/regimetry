@@ -53,6 +53,9 @@ class Config(metaclass=SingletonMeta):
         self._include_columns = "*"  # Default to include all columns
         self._exclude_columns = []  # Empty list to exclude specific columns
 
+        self._window_size = 30  # default
+        self._stride = 1        # default
+
 
         self._ensure_directories_exist()
         Config._is_initialized = True
@@ -120,6 +123,11 @@ class Config(metaclass=SingletonMeta):
         if "n_clusters" in data:
             print(f"[Config] Overriding 'n_clusters': {data['n_clusters']}")
             self.n_clusters = int(data["n_clusters"])
+
+        if "stride" in data:
+            print(f"[Config] Overriding 'stride': {data['stride']}")
+            self.stride = int(data["stride"])
+                        
 
             
     @property
@@ -252,6 +260,23 @@ class Config(metaclass=SingletonMeta):
     @n_clusters.setter
     def n_clusters(self, value: int):
         self._n_clusters = int(value)
+
+    @property
+    def window_size(self) -> int:
+        return getattr(self, "_window_size", 30)
+
+    @window_size.setter
+    def window_size(self, value: int):
+        self._window_size = int(value)
+
+    @property
+    def stride(self) -> int:
+        return getattr(self, "_stride", 1)
+
+    @stride.setter
+    def stride(self, value: int):
+        self._stride = int(value)
+
 
     def _resolve_path(self, val: str) -> str:
         if not val:

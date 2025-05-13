@@ -15,5 +15,6 @@ class CommandLineArgs:
     embedding_path: Optional[str] = None
     regime_data_path: Optional[str] = None
     output_dir: Optional[str] = None
-    window_size: int = 30
+    window_size: Optional[int] = None
+    stride: Optional[int] = None
     n_clusters: int = 3

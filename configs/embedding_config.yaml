@@ -16,3 +16,6 @@ include_columns: "*"
 exclude_columns: ["Date", "Hour"]
 #   - Predictions
 #   - Confidence
+
+window_size: 30
+stride: 1

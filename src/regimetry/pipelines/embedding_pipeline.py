@@ -27,9 +27,10 @@ class EmbeddingPipeline:
     Embedding pipeline to transform raw data into windowed transformer embeddings.
     """
 
-    def __init__(self, window_size: int = 30):
+    def __init__(self):
         self.config = Config()
-        self.window_size = window_size  # No need for val_size, test_size here anymore
+        self.window_size = self.config.window_size
+        self.stride = self.config.stride
         self.data_ingestion_service = DataIngestionService()
         self.data_transformation_service = DataTransformationService()
 
@@ -53,7 +54,7 @@ class EmbeddingPipeline:
                 full_data_arr = full_data_arr.toarray()
 
             # STEP 3: Rolling Window Generation
-            window_gen = RollingWindowGenerator(data=full_data_arr, window_size=self.window_size)
+            window_gen = RollingWindowGenerator(data=full_data_arr, window_size=self.window_size, stride=self.stride)
             rolling_windows = window_gen.generate()
             logging.info(f"🧊 Rolling windows shape: {rolling_windows.shape}")
 
@@ -82,7 +83,7 @@ class EmbeddingPipeline:
                 output_path=filepath,
                 features_used=preprocessor_obj.get_feature_names_out().tolist(),
                 window_size=self.window_size,
-                stride=1,
+                stride=self.stride,
                 encoding_method="sinusoidal",
                 encoding_style="stacked",
                 embedding_model="UnsupervisedTransformerEncoder",

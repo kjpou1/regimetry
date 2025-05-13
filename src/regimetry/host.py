@@ -40,7 +40,16 @@ class Host:
 
         if args.output_name:
             logging.info(f"Overriding output_name from CLI: {args.output_name}")
-            self.config.output_name = args.output_name            
+            self.config.output_name = args.output_name   
+
+        if args.window_size:
+            logging.info(f"Overriding window_size from CLI: {args.window_size}")
+            self.config.window_size = args.window_size
+
+        if args.stride:
+            logging.info(f"Overriding stride from CLI: {args.stride}")
+            self.config.stride = args.stride
+                                
 
     def run(self):
         """
@@ -110,8 +119,8 @@ class Host:
         Execute the model training workflow by calling the model training service.
         """
         try:
-            train_pipeline = EmbeddingPipeline()
-            train_pipeline.run_pipeline()
+            embed_pipeline = EmbeddingPipeline()
+            embed_pipeline.run_pipeline()
 
         except Exception as e:
             logging.error(f"Error during host training: {e}")

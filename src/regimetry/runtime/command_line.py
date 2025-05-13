@@ -49,6 +49,18 @@ class CommandLine:
             help="Path to the signal-enriched input CSV file (overrides config or .env)",
         )
         embed_parser.add_argument(
+            "--window-size",
+            type=int,
+            default=None,
+            help="Size of each rolling window for embedding (default: 30)",
+        )
+        embed_parser.add_argument(
+            "--stride",
+            type=int,
+            default=None,
+            help="Stride between rolling windows (default: 1)",
+        )
+        embed_parser.add_argument(
             "--config",
             type=str,
             required=False,
@@ -130,6 +142,7 @@ class CommandLine:
             regime_data_path=getattr(args, "regime_data_path", None),
             output_dir=getattr(args, "output_dir", None),
             window_size=getattr(args, "window_size", 30),
+            stride=getattr(args, "stride", 1),
             n_clusters=getattr(args, "n_clusters", 3),
         )
 
