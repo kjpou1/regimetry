@@ -1,0 +1,5 @@
+embedding_path: ./embeddings/EUR_USD_embeddings.npy
+regime_data_path: ./data/processed/regime_input.csv
+output_dir: ./reports/EUR_USD
+window_size: 30
+n_clusters: 3

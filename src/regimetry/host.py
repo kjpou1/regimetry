@@ -7,6 +7,8 @@ from regimetry.logger_manager import LoggerManager
 from regimetry.models.command_line_args import CommandLineArgs
 from regimetry.pipelines.ingestion_pipeline import IngestionPipeline
 from regimetry.pipelines.embedding_pipeline import EmbeddingPipeline
+from regimetry.pipelines.regime_clustering_pipeline import RegimeClusteringPipeline
+
 
 logging = LoggerManager.get_logger(__name__)
 
@@ -68,11 +70,12 @@ class Host:
                 #     )
                 await self.run_embedding()
 
+            elif self.args.command == "cluster":
+                logging.info("Executing clustering workflow.")
+                await self.run_clustering()
             else:
                 logging.error("No valid subcommand provided.")
-                raise ValueError(
-                    "Please specify a valid subcommand: 'ingest' or 'train'."
-                )
+                raise ValueError("Please specify a valid subcommand: 'ingest', 'embed', or 'cluster'.")
 
         except CustomException as e:
             logging.error("A custom error occurred during host operations: %s", e)
@@ -112,4 +115,40 @@ class Host:
 
         except Exception as e:
             logging.error(f"Error during host training: {e}")
+            raise e
+
+    async def run_clustering(self):
+        """
+        Run the unsupervised clustering pipeline using transformer embeddings.
+        Loads parameters from config or CLI overrides.
+        """
+        try:
+            # CLI > config.yaml precedence
+            if self.args.embedding_path:
+                self.config.embedding_path = self.args.embedding_path
+            if self.args.regime_data_path:
+                self.config.regime_data_path = self.args.regime_data_path
+            if self.args.output_dir:
+                self.config.output_dir = self.args.output_dir
+            if self.args.window_size:
+                self.config.window_size = self.args.window_size
+            if self.args.n_clusters:
+                self.config.n_clusters = self.args.n_clusters
+
+            # Manual validation of required fields
+            missing = []
+            if not self.config.embedding_path:
+                missing.append("embedding_path")
+            if not self.config.regime_data_path:
+                missing.append("regime_data_path")
+            if not self.config.output_dir:
+                missing.append("output_dir")
+            if missing:
+                raise ValueError(f"Missing required config fields: {', '.join(missing)}")
+
+            pipeline = RegimeClusteringPipeline()
+            pipeline.run()
+
+        except Exception as e:
+            logging.error(f"❌ Error during clustering: {e}")
             raise e

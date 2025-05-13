@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from regimetry.models import SingletonMeta
 from regimetry.utils.path_utils import get_project_root
+from regimetry.utils.path_utils import ensure_all_dirs_exist
 
 
 class Config(metaclass=SingletonMeta):
@@ -57,7 +58,7 @@ class Config(metaclass=SingletonMeta):
         Config._is_initialized = True
 
     def _ensure_directories_exist(self):
-        for d in [
+        ensure_all_dirs_exist([
             self.RAW_DATA_DIR,
             self.PROCESSED_DATA_DIR,
             self.EMBEDDINGS_DIR,
@@ -66,9 +67,8 @@ class Config(metaclass=SingletonMeta):
             self.LOG_DIR,
             self.REPORTS_DIR,
             self.HISTORY_DIR,
-        ]:
-            os.makedirs(d, exist_ok=True)
-
+        ])
+        
     def load_from_yaml(self, path: str):
         """
         Override config values from a YAML config file.
@@ -101,6 +101,25 @@ class Config(metaclass=SingletonMeta):
         if "output_name" in data:
             print(f"[Config] Overriding 'output_name': {self._output_name} → {data['output_name']}")
             self.output_name = data["output_name"]
+        if "embedding_path" in data:
+            print(f"[Config] Overriding 'embedding_path': {data['embedding_path']}")
+            self.embedding_path = data["embedding_path"]
+
+        if "regime_data_path" in data:
+            print(f"[Config] Overriding 'regime_data_path': {data['regime_data_path']}")
+            self.regime_data_path = data["regime_data_path"]
+
+        if "output_dir" in data:
+            print(f"[Config] Overriding 'output_dir': {data['output_dir']}")
+            self.output_dir = data["output_dir"]
+
+        if "window_size" in data:
+            print(f"[Config] Overriding 'window_size': {data['window_size']}")
+            self.window_size = int(data["window_size"])
+
+        if "n_clusters" in data:
+            print(f"[Config] Overriding 'n_clusters': {data['n_clusters']}")
+            self.n_clusters = int(data["n_clusters"])
 
             
     @property
@@ -124,11 +143,12 @@ class Config(metaclass=SingletonMeta):
         self._debug = value
 
     @property
-    def signal_input_path(self):
-        return self._signal_input_path
+    def signal_input_path(self) -> str:
+        val = getattr(self, "_signal_input_path", None)
+        return self._resolve_path(val)
 
     @signal_input_path.setter
-    def signal_input_path(self, value):
+    def signal_input_path(self, value: str):
         if not isinstance(value, str):
             raise ValueError("signal_input_path must be a string.")
         self._signal_input_path = value
@@ -189,7 +209,59 @@ class Config(metaclass=SingletonMeta):
         if not isinstance(value, str):
             raise ValueError("output_name must be a string.")
         self._output_name = value
-                
+
+    @property
+    def embedding_path(self) -> str:
+        val = getattr(self, "_embedding_path", None)
+        return self._resolve_path(val)
+
+    @embedding_path.setter
+    def embedding_path(self, value: str):
+        self._embedding_path = value
+
+    @property
+    def regime_data_path(self) -> str:
+        val = getattr(self, "_regime_data_path", None)
+        return self._resolve_path(val)
+
+    @regime_data_path.setter
+    def regime_data_path(self, value: str):
+        self._regime_data_path = value
+    
+    @property
+    def output_dir(self) -> str:
+        val = getattr(self, "_output_dir", None)
+        return self._resolve_path(val)
+
+    @output_dir.setter
+    def output_dir(self, value: str):
+        self._output_dir = value
+
+    @property
+    def window_size(self) -> int:
+        return getattr(self, "_window_size", 30)
+
+    @window_size.setter
+    def window_size(self, value: int):
+        self._window_size = int(value)
+
+    @property
+    def n_clusters(self) -> int:
+        return getattr(self, "_n_clusters", 3)
+
+    @n_clusters.setter
+    def n_clusters(self, value: int):
+        self._n_clusters = int(value)
+
+    def _resolve_path(self, val: str) -> str:
+        if not val:
+            return None
+        if os.path.isabs(val):
+            return val
+        resolved = os.path.join(self.BASE_DIR, val)
+        print(f"[Config] Resolved relative path: {val} → {resolved}")
+        return resolved
+
     @classmethod
     def initialize(cls):
         if not cls._is_initialized:

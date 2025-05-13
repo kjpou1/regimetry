@@ -32,5 +32,13 @@
       "program": "launch_host.py",
       "args": ["embed", "--config", "configs/embedding_config.yaml"]
     },
+    {
+      "name": "Cluster",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "launch_host.py",
+      "args": ["cluster", "--config", "configs/cluster_config.yaml"]
+    },
+
   ]
 }
