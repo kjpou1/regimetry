@@ -24,6 +24,11 @@
     - [🔹 Cluster Regimes](#-cluster-regimes)
       - [🛠 Available CLI Arguments for `cluster`](#-available-cli-arguments-for-cluster)
   - [🧪 Example Dataset](#-example-dataset)
+  - [�️ Interactive Dashboard](#️-interactive-dashboard)
+    - [🚀 Launch the App](#-launch-the-app)
+    - [🧩 Features](#-features)
+    - [📂 Directory Structure](#-directory-structure)
+    - [📦 Example Config for Palette Preview](#-example-config-for-palette-preview)
   - [🛠 Project Structure](#-project-structure)
   - [🧭 Orientation Going Forward](#-orientation-going-forward)
   - [✅ Status](#-status)
@@ -201,7 +206,65 @@ python run.py embed --signal-input-path examples/EUR_USD_processed_signals.csv
 
 ---
 
+## 🖥️ Interactive Dashboard
 
+`regimetry` ships with an optional Dash app that provides a user-friendly interface for exploring clustering results.
+
+### 🚀 Launch the App
+
+```bash
+poetry run python -m dash_app.app
+```
+
+The app will run locally at [http://localhost:8050](http://localhost:8050)
+
+> ⚠️ Requires `dash`, `dash-bootstrap-components`, and `plotly` installed in your environment.
+
+### 🧩 Features
+
+* **📁 YAML Config Loader**
+  Upload a YAML config file (e.g., `configs/full_config.yaml`) to view the current settings:
+
+  * `window_size`
+
+  * `report_palette`
+
+  * `output_dir`
+
+  * `report_format`
+
+  > 🛈 *This is for **informational preview only** — uploading a config file does **not** affect the rendered plots.*
+  > Plots are static and must be regenerated via the CLI (`run.py cluster`) if you want different parameters applied.
+
+* **🧠 Cluster Visualizations**
+
+  * `📉 Price Overlay`: Close price with color-coded cluster markers
+  * `🌀 t-SNE`: 2D projection of regime embedding space
+  * `🔮 UMAP`: Alternative manifold-based view of clusters
+
+* **🎨 Palette Preview**
+
+  * Auto-detects and displays the seaborn color palette in use
+  * Ensures consistent cluster color mapping between matplotlib and Plotly
+  * Preview updates when a new YAML config is uploaded
+
+### 📂 Directory Structure
+
+```bash
+dash_app/
+├── app.py               # Main Dash app with config reader and tab layout
+├── ...
+```
+
+### 📦 Example Config for Palette Preview
+
+```yaml
+report_format: ["matplotlib", "plotly"]
+report_palette: "Set2"
+output_dir: ./artifacts/reports/EUR_USD
+```
+
+---
 
 ## 🛠 Project Structure
 
