@@ -17,6 +17,12 @@
     - [2. **Embedding Pipeline**](#2-embedding-pipeline)
     - [3. **Clustering**](#3-clustering)
     - [4. **Visualization \& Interpretation**](#4-visualization--interpretation)
+  - [� Getting Started](#-getting-started)
+    - [1. 🔧 Install Dependencies](#1--install-dependencies)
+    - [2. 📥 Ingest + Transform Data](#2--ingest--transform-data)
+    - [3. 🔐 Generate Embeddings](#3--generate-embeddings)
+    - [4. 🔗 Cluster the Embeddings](#4--cluster-the-embeddings)
+    - [5. 🖼️ Launch the Interactive Dashboard (Optional)](#5-️-launch-the-interactive-dashboard-optional)
   - [📟 Command Line Usage](#-command-line-usage)
       - [🔹 Ingest Data](#-ingest-data)
     - [🔹 Generate Embeddings](#-generate-embeddings)
@@ -24,7 +30,7 @@
     - [🔹 Cluster Regimes](#-cluster-regimes)
       - [🛠 Available CLI Arguments for `cluster`](#-available-cli-arguments-for-cluster)
   - [🧪 Example Dataset](#-example-dataset)
-  - [�️ Interactive Dashboard](#️-interactive-dashboard)
+  - [🖥️ Interactive Dashboard](#️-interactive-dashboard)
     - [🚀 Launch the App](#-launch-the-app)
     - [🧩 Features](#-features)
     - [📂 Directory Structure](#-directory-structure)
@@ -79,6 +85,76 @@ Formally:
 - Use t-SNE or UMAP to project embeddings  
 - Visualize regime transitions over time  
 - Map regimes back to chart or signal data for strategy insights
+
+---
+
+## 🚀 Getting Started
+
+This section gives you the fastest way to test `regimetry` end-to-end on the included EUR/USD dataset.
+
+### 1. 🔧 Install Dependencies
+
+> Recommended: Use [Poetry](https://python-poetry.org/) to manage environments.
+
+```bash
+poetry install
+```
+
+Or manually:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 2. 📥 Ingest + Transform Data
+
+Use the built-in test file to generate processed input:
+
+```bash
+python run.py ingest \
+  --signal-input-path examples/EUR_USD_processed_signals.csv
+```
+
+---
+
+### 3. 🔐 Generate Embeddings
+
+```bash
+python run.py embed \
+  --signal-input-path examples/EUR_USD_processed_signals.csv \
+  --output-name EUR_USD_embeddings.npy \
+  --window-size 30 \
+  --stride 1
+```
+
+---
+
+### 4. 🔗 Cluster the Embeddings
+
+```bash
+python run.py cluster \
+  --embedding-path embeddings/EUR_USD_embeddings.npy \
+  --regime-data-path data/processed/regime_input.csv \
+  --output-dir reports/EUR_USD \
+  --window-size 30 \
+  --n-clusters 3
+```
+
+---
+
+### 5. 🖼️ Launch the Interactive Dashboard (Optional)
+
+```bash
+poetry run python -m dash_app.app
+```
+
+Open in browser: [http://localhost:8050](http://localhost:8050)
+
+> 🛈 Upload a YAML config (e.g., `configs/full_config.yaml`) to preview your settings and color palette.
+> ⚠️ This config **does not change the plots** — it’s informational only.
+> To change plot visuals, rerun the `cluster` pipeline with new settings.
 
 ---
 
