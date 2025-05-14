@@ -5,6 +5,8 @@
 ![MIT License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
 ![Built with TensorFlow](https://img.shields.io/badge/built%20with-TensorFlow-orange.svg?logo=tensorflow)
+![Visualize with Dash](https://img.shields.io/badge/Dash-Framework-blue?logo=dash)
+![Managed with Poetry](https://img.shields.io/badge/Poetry-Dependency--Mgmt-purple)
 ![Development Status](https://img.shields.io/badge/status-active-brightgreen)
 ![Made With ❤️](https://img.shields.io/badge/made%20with-%E2%9D%A4-red)
 
@@ -25,7 +27,7 @@
     - [🔹 Cluster Regimes](#-cluster-regimes)
       - [🛠 Available CLI Arguments for `cluster`](#-available-cli-arguments-for-cluster)
   - [🧪 Example Dataset](#-example-dataset)
-  - [�️ Configuration Files](#️-configuration-files)
+  - [🛠️ Configuration Files](#️-configuration-files)
     - [📂 Example Config](#-example-config)
     - [🧠 Usage in CLI](#-usage-in-cli)
     - [🖼️ Usage in Dash App](#️-usage-in-dash-app)
