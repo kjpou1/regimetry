@@ -99,7 +99,7 @@ class RegimeClusteringPipeline:
         logging.info(f"💾 Cluster assignments saved: {cluster_path}")
 
         # STEP 7: Generate scatter/timeline/overlay plots
-        report_service = ClusteringReportService(output_dir=self.output_dir)
+        report_service = ClusteringReportService()
         report_service.generate_all(
             df=df,
             cluster_labels=cluster_labels,

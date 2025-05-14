@@ -60,6 +60,12 @@ class Config(metaclass=SingletonMeta):
         self._encoding_style = os.getenv("ENCODING_STYLE", "interleaved")
         self._embedding_dim = os.getenv("EMBEDDING_DIM", None)  # or your default
 
+        self._report_format = os.getenv("REPORT_FORMAT", ["matplotlib", "plotly"])  # Default to both
+        if isinstance(self._report_format, str):
+            # Convert comma-separated string to list if needed
+            self._report_format = [fmt.strip() for fmt in self._report_format.split(",") if fmt.strip()]
+
+        self._report_palette = os.getenv("REPORT_PALETTE", "tab10")  # Default seaborn/mpl palette
 
         self._ensure_directories_exist()
         Config._is_initialized = True
@@ -144,8 +150,17 @@ class Config(metaclass=SingletonMeta):
             print(f"[Config] Overriding 'embedding_dim': {data['embedding_dim']}")
             self.embedding_dim = int(data["embedding_dim"])
                             
+        if "report_format" in data:
+            fmt = data["report_format"]
+            if isinstance(fmt, list):
+                print(f"[Config] Overriding 'report_format': {self._report_format} → {fmt}")
+                self.report_format = fmt
+            else:
+                raise ValueError("report_format must be a list of strings like ['matplotlib', 'plotly']")
 
-
+        if "report_palette" in data:
+            print(f"[Config] Overriding 'report_palette': {data['report_palette']}")
+            self.report_palette = data["report_palette"]
             
     @property
     def config_path(self):
@@ -318,6 +333,28 @@ class Config(metaclass=SingletonMeta):
     def embedding_dim(self, value: int):
         self._embedding_dim = int(value)
 
+    @property
+    def report_format(self) -> list[str]:
+        return self._report_format
+
+    @report_format.setter
+    def report_format(self, value: list[str]):
+        if not isinstance(value, list):
+            raise ValueError("report_format must be a list")
+        for fmt in value:
+            if fmt not in ["matplotlib", "plotly"]:
+                raise ValueError(f"Unsupported report format: {fmt}")
+        self._report_format = value
+
+    @property
+    def report_palette(self) -> str:
+        return self._report_palette
+
+    @report_palette.setter
+    def report_palette(self, value: str):
+        if not isinstance(value, str):
+            raise ValueError("report_palette must be a string.")
+        self._report_palette = value
 
     def _resolve_path(self, val: str) -> str:
         if not val:

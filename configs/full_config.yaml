@@ -27,3 +27,10 @@ embedding_path: ./embeddings/EUR_USD_embeddings.npy
 regime_data_path: ./data/processed/regime_input.csv
 output_dir: ./reports/EUR_USD
 n_clusters: 8
+
+report_format: ["matplotlib", "plotly"]  # both
+# report_format: ["matplotlib"]          # only static
+# report_format: ["plotly"]              # only interactive
+# report_format: []      
+
+report_palette: Set2
