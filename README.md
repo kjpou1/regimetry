@@ -25,6 +25,10 @@
     - [🔹 Cluster Regimes](#-cluster-regimes)
       - [🛠 Available CLI Arguments for `cluster`](#-available-cli-arguments-for-cluster)
   - [🧪 Example Dataset](#-example-dataset)
+  - [�️ Configuration Files](#️-configuration-files)
+    - [📂 Example Config](#-example-config)
+    - [🧠 Usage in CLI](#-usage-in-cli)
+    - [🖼️ Usage in Dash App](#️-usage-in-dash-app)
   - [🖥️ Interactive Dashboard](#️-interactive-dashboard)
     - [🚀 Launch the App](#-launch-the-app)
     - [🧩 Features](#-features)
@@ -223,6 +227,85 @@ Run the **embedding pipeline** to generate transformer embeddings:
 ```bash
 python run.py embed --signal-input-path examples/EUR_USD_processed_signals.csv
 ```
+---
+
+## 🛠️ Configuration Files
+
+`regimetry` supports YAML configuration files to streamline pipeline execution and visualization setup. These configs centralize all key parameters used by the CLI and Dash dashboard.
+
+### 📂 Example Config
+
+Here's a fully annotated example config file at [`config/full_config.yaml`](config/full_config.yaml):
+
+```yaml
+# ✅ General Settings
+debug: true
+
+# ✅ Ingestion Settings
+signal_input_path: ./examples/EUR_USD_processed_signals.csv
+include_columns: "*"
+exclude_columns: ["Date", "Hour"]  # Remove Date/Hour for daily resolution
+
+# ✅ Embedding Settings
+output_name: EUR_USD_embeddings.npy
+window_size: 10
+stride: 1
+encoding_method: "sinusoidal"      # Options: 'sinusoidal', 'learnable'
+encoding_style: "interleaved"      # Options: 'interleaved', 'stacked'
+# embedding_dim: 80                # Required if using 'learnable'
+
+# ✅ Clustering Settings
+embedding_path: ./embeddings/EUR_USD_embeddings.npy
+regime_data_path: ./data/processed/regime_input.csv
+output_dir: ./reports/EUR_USD
+n_clusters: 8
+
+# ✅ Report Settings
+report_format: ["matplotlib", "plotly"]  # Options: [], ["matplotlib"], ["plotly"]
+report_palette: Set2                     # Any valid seaborn palette name
+```
+
+---
+
+### 🧠 Usage in CLI
+
+You can run any pipeline stage using a config override:
+
+```bash
+python run.py cluster --config config/full_config.yaml
+```
+
+* CLI will auto-resolve relative paths (e.g., to `./data/`, `./embeddings/`)
+* Config values override internal defaults
+* Any CLI argument passed explicitly will override the config
+
+> ✅ **CLI flags always take precedence** over values defined in the YAML.
+
+---
+
+### 🖼️ Usage in Dash App
+
+The Dash dashboard can also load and preview a YAML config:
+
+```bash
+poetry run python -m dash_app.app
+```
+
+In the **Palette Preview** tab:
+
+* Upload any `.yaml` file
+* The dashboard will display:
+
+  * Parsed settings (`window_size`, `n_clusters`, `output_dir`, etc.)
+  * Current seaborn `report_palette` rendered as a color swatch
+
+> ⚠️ *This is for preview only — uploaded config **does not affect** the rendered plots.*
+> To change plots, rerun the `cluster` CLI with the updated config.
+
+---
+
+For a full reference of all supported fields, see:
+📘 [`docs/CONFIG_REFERENCE_README.md`](docs/CONFIG_REFERENCE_README.md)
 
 ---
 
@@ -267,6 +350,8 @@ The app will run locally at [http://localhost:8050](http://localhost:8050)
   * Auto-detects and displays the seaborn color palette in use
   * Ensures consistent cluster color mapping between matplotlib and Plotly
   * Preview updates when a new YAML config is uploaded
+
+---
 
 ### 📂 Directory Structure
 
