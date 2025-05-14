@@ -1,111 +1,7 @@
-# Transformer Architecture in Regimetry (Draft)
 
-This document outlines how Transformer-based models can be integrated into the `regimetry` framework for sequence modeling and regime classification.
+# Transformer Architecture in `regimetry`
 
----
-
-## 📀 Input Format
-
-All models expect inputs shaped as:
-
-```python
-(batch_size, window_size, num_features)
-```
-
-Where:
-
-* `window_size`: Length of each rolling window (e.g. 30)
-* `num_features`: Dimensionality of the feature space after transformation (e.g. 1273)
-
-This aligns with the structure output from the `RollingWindowGenerator`.
-
----
-
-## 🔁 Positional Encoding
-
-Transformers are **position-agnostic**, so we must inject positional information.
-
-Supported methods:
-
-* **Sinusoidal**: Deterministic, non-trainable (suitable for static models)
-* **Learnable**: Trainable embeddings (better for dynamic learning)
-
-See [`POSITIONAL_ENCODING.md`](./POSITIONAL_ENCODING.md) for full documentation.
-
----
-
-## 🛡️ Masking (Not Needed — For Future Support)
-
-Transformers support **masking** to control attention behavior, but:
-
-> ✅ **In `regimetry`, masking is not currently required** because all rolling windows are fixed-length and fully populated — no padding or causal decoding is needed.
-
-We include this section for completeness and future extensibility.
-
-### 1. Padding Mask (🔒 Optional)
-
-Used to **ignore padded positions** in variable-length sequences (e.g., NLP):
-
-```python
-# Shape: (batch_size, seq_len)
-mask = tf.cast(tf.math.not_equal(input_tensor, 0), tf.float32)
-```
-
-### 2. Look-Ahead Mask (🔒 Optional)
-
-Used to **prevent attention to future timesteps** in autoregressive settings:
-
-```python
-look_ahead_mask = 1 - tf.linalg.band_part(tf.ones((seq_len, seq_len)), -1, 0)
-```
-
-These masks are not applied in our current implementation, but the code scaffolding exists should we expand to sequence prediction or token-based forecasting.
-
----
-
-## 🧐 Model Block (Example)
-
-```python
-import tensorflow as tf
-from tensorflow.keras.layers import Input, Dense, MultiHeadAttention, LayerNormalization, Dropout
-
-def build_transformer_block(seq_len, d_model, num_heads, ff_dim):
-    inputs = Input(shape=(seq_len, d_model))
-    attn = MultiHeadAttention(num_heads=num_heads, key_dim=d_model)(inputs, inputs)
-    attn = Dropout(0.1)(attn)
-    out1 = LayerNormalization(epsilon=1e-6)(inputs + attn)
-
-    ff = Dense(ff_dim, activation='relu')(out1)
-    ff = Dense(d_model)(ff)
-    ff = Dropout(0.1)(ff)
-    out2 = LayerNormalization(epsilon=1e-6)(out1 + ff)
-
-    return tf.keras.Model(inputs=inputs, outputs=out2)
-```
-
----
-
-## 🔌 Planned Integration
-
-| Stage                   | Description                                 | Status        |
-| ----------------------- | ------------------------------------------- | ------------- |
-| Positional Encoding     | Injected before model input                 | ✅ Implemented |
-| Transformer Encoder     | Lightweight encoder block                   | ➰ In Progress |
-| Padding/Lookahead Masks | Optional support for future sequence models | 🕒 Not Yet    |
-| Output Head             | Dense/MLP or classification/regime decoder  | ➰ In Progress |
-
----
-
-## 🚧 Notes and Design Considerations
-
-* You can experiment with multiple stacked encoder blocks
-* Output can be pooled (e.g. mean or CLS token) before classification
-* Causal decoding (e.g. for future prediction) would require masked attention and possibly sequence shifting
-
-
-# Transformer Architecture in Regimetry
-
-This document outlines how Transformer-based models can be integrated into the `regimetry` framework for sequence modeling and regime classification.
+This document outlines how Transformer-based models are integrated into the `regimetry` framework for unsupervised sequence modeling and regime clustering.
 
 ---
 
@@ -122,89 +18,107 @@ Where:
 * `window_size`: Length of each rolling window (e.g. 30)
 * `num_features`: Dimensionality of the feature space after transformation (e.g. 1273)
 
-This aligns with the structure output from the `RollingWindowGenerator`.
+These inputs are produced by the rolling window pipeline and directly passed to the embedding model.
 
 ---
 
 ## 🔁 Positional Encoding
 
-Transformers are **position-agnostic**, so we must inject positional information.
+Transformers are **position-agnostic**, so we inject positional information.
 
-Supported methods:
+### Supported Methods:
 
-* **Sinusoidal**: Deterministic, non-trainable (suitable for static models)
-* **Learnable**: Trainable embeddings (better for dynamic learning)
+* **Sinusoidal**: Deterministic, non-trainable (default)
+* **Learnable**: Trainable embeddings (optional via config)
 
-See [`POSitional_ENCODING.md`](./POSITIONAL_ENCODING.md) for full documentation.
+See [`POSITIONAL_ENCODING.md`](./POSITIONAL_ENCODING.md) for full details.
 
 ---
 
-## 🛡️ Masking (Not Needed — For Future Support)
+## 🛡️ Masking (Not Required)
 
 Transformers support **masking** to control attention behavior, but:
 
-> ✅ **In `regimetry`, masking is not currently required** because all rolling windows are fixed-length and fully populated — no padding or causal decoding is needed.
+> ✅ In `regimetry`, masking is not currently required.
 
-We include this section for completeness and future extensibility.
+All windows are fixed-length and fully populated. We do not pad or perform causal decoding.
 
-### 1. Padding Mask (🔒 Optional)
+### Optional Mask Types (Not Used Yet):
 
-Used to **ignore padded positions** in variable-length sequences (e.g., NLP):
+**1. Padding Mask**
 
 ```python
-# Shape: (batch_size, seq_len)
 mask = tf.cast(tf.math.not_equal(input_tensor, 0), tf.float32)
 ```
 
-### 2. Look-Ahead Mask (🔒 Optional)
-
-Used to **prevent attention to future timesteps** in autoregressive settings:
+**2. Look-Ahead Mask**
 
 ```python
 look_ahead_mask = 1 - tf.linalg.band_part(tf.ones((seq_len, seq_len)), -1, 0)
 ```
 
-These masks are not applied in our current implementation, but the code scaffolding exists should we expand to sequence prediction or token-based forecasting.
+These are reserved for future support in autoregressive models.
 
 ---
 
-## 🧠 Model Block (Example)
+## 🧠 Current Model Architecture
+
+The core embedding model is a stack of Transformer encoder blocks, ending in a global pooling layer.
 
 ```python
-import tensorflow as tf
-from tensorflow.keras.layers import Input, Dense, MultiHeadAttention, LayerNormalization, Dropout
+def _build_model(self):
+    """
+    Build and return a Transformer encoder model for embedding extraction.
+    """
+    head_size = self.config.get("head_size", 256)
+    num_heads = self.config.get("num_heads", 4)
+    ff_dim = self.config.get("ff_dim", 128)
+    num_blocks = self.config.get("num_transformer_blocks", 2)
+    dropout = self.config.get("dropout", 0.1)
 
-def build_transformer_block(seq_len, d_model, num_heads, ff_dim):
-    inputs = Input(shape=(seq_len, d_model))
-    attn = MultiHeadAttention(num_heads=num_heads, key_dim=d_model)(inputs, inputs)
-    attn = Dropout(0.1)(attn)
-    out1 = LayerNormalization(epsilon=1e-6)(inputs + attn)
+    inputs = keras.Input(shape=self.input_shape)
+    x = inputs
+    for _ in range(num_blocks):
+        x = self._transformer_encoder(x, head_size, num_heads, ff_dim, dropout)
 
-    ff = Dense(ff_dim, activation='relu')(out1)
-    ff = Dense(d_model)(ff)
-    ff = Dropout(0.1)(ff)
-    out2 = LayerNormalization(epsilon=1e-6)(out1 + ff)
+    x = layers.GlobalAveragePooling1D()(x)
+    return keras.Model(inputs=inputs, outputs=x, name="UnsupervisedTransformerEncoder")
+```
 
-    return tf.keras.Model(inputs=inputs, outputs=out2)
+Each encoder block contains attention, residuals, and pointwise feedforward layers:
+
+```python
+def _transformer_encoder(self, inputs, head_size, num_heads, ff_dim, dropout):
+    x = layers.MultiHeadAttention(
+        key_dim=head_size, num_heads=num_heads, dropout=dropout
+    )(inputs, inputs)
+    x = layers.Dropout(dropout)(x)
+    x = layers.LayerNormalization(epsilon=1e-6)(x)
+    res = x + inputs
+
+    x = layers.Conv1D(filters=ff_dim, kernel_size=1, activation="relu")(res)
+    x = layers.Dropout(dropout)(x)
+    x = layers.Conv1D(filters=inputs.shape[-1], kernel_size=1)(x)
+    x = layers.LayerNormalization(epsilon=1e-6)(x)
+    return x + res
 ```
 
 ---
 
-## 🔌 Planned Integration
+## 🔌 Integration Status
 
-| Stage                   | Description                                 | Status         |
-| ----------------------- | ------------------------------------------- | -------------- |
-| Positional Encoding     | Injected before model input                 | ✅ Implemented  |
-| Transformer Encoder     | Lightweight encoder block                   | 🔄 In Progress |
-| Padding/Lookahead Masks | Optional support for future sequence models | 🕒 Not Yet     |
-| Output Head             | Dense/MLP or classification/regime decoder  | 🔄 In Progress |
+| Stage                   | Description                                 | Status        |
+| ----------------------- | ------------------------------------------- | ------------- |
+| **Positional Encoding** | Injected before Transformer input           | ✅ Implemented |
+| **Transformer Encoder** | Multi-block attention + conv FF layers      | ✅ Implemented |
+| **Masking Support**     | Padding / look-ahead masks (optional)       | 🕒 Not Needed |
+| **Output Head**         | GlobalAvgPooling → used as embedding vector | ✅ Implemented |
 
 ---
 
-## 🚧 Notes and Design Considerations
+## 🧭 Design Notes
 
-* You can experiment with multiple stacked encoder blocks
-* Output can be pooled (e.g. mean or CLS token) before classification
-* Causal decoding (e.g. for future prediction) would require masked attention and possibly sequence shifting
-
-
+* The current model is **unsupervised** — output vectors are clustered via Spectral Clustering.
+* Global average pooling is used to compress temporal signals into fixed-length regime embeddings.
+* The encoder is **modular** — you can easily swap in additional attention heads, deeper stacks, or alternative pooling strategies.
+* Future versions may introduce decoder blocks or contrastive learning heads.
