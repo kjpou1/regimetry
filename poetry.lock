@@ -431,6 +431,24 @@ diskcache = ["diskcache (>=5.2.1)", "multiprocess (>=0.70.12)", "psutil (>=5.8.0
 testing = ["beautifulsoup4 (>=4.8.2)", "cryptography", "dash-testing-stub (>=0.0.2)", "lxml (>=4.6.2)", "multiprocess (>=0.70.12)", "percy (>=2.0.2)", "psutil (>=5.8.0)", "pytest (>=6.0.2)", "requests[security] (>=2.21.0)", "selenium (>=3.141.0,<=4.2.0)", "waitress (>=1.4.4)"]
 
 [[package]]
+name = "dash-bootstrap-components"
+version = "2.0.2"
+description = "Bootstrap themed components for use in Plotly Dash"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "dash_bootstrap_components-2.0.2-py3-none-any.whl", hash = "sha256:033d87511f7a9be72657de52c0c41539e1bf2aac8fe6c0c3a00f153c1bd4ed61"},
+    {file = "dash_bootstrap_components-2.0.2.tar.gz", hash = "sha256:f35218f0e5e2b159121f3e010e61b3226b0a678b2f582d0bd207d42d29132cc0"},
+]
+
+[package.dependencies]
+dash = ">=3.0.3"
+
+[package.extras]
+pandas = ["numpy (>=2.0.2)", "pandas (>=2.2.3)"]
+
+[[package]]
 name = "dill"
 version = "0.4.0"
 description = "serialize all of Python"
@@ -3780,4 +3798,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<3.13"
-content-hash = "af709a5c5d4da7820d965678be3708cdc466702d0f1c622de047bdd224f0d860"
+content-hash = "b76b51f27f05e34e48c0370b0276bfe7112d5260301cf90bb014bf114be3687d"
