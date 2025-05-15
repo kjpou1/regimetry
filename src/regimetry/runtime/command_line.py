@@ -127,7 +127,7 @@ class CommandLine:
         cluster_parser.add_argument(
             "--window-size",
             type=int,
-            default=30,
+            default=None,
             help="Window size used during embedding. Used to align clusters to regime data.",
         )
         cluster_parser.add_argument(
