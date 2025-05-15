@@ -20,6 +20,7 @@
     - [3. **Clustering**](#3-clustering)
     - [4. **Visualization \& Interpretation**](#4-visualization--interpretation)
   - [🚀 Getting Started](#-getting-started)
+    - [📘 Regime Detection Window Delay](#-regime-detection-window-delay)
   - [📟 Command Line Usage](#-command-line-usage)
       - [🔹 Ingest Data](#-ingest-data)
     - [🔹 Generate Embeddings](#-generate-embeddings)
@@ -105,6 +106,25 @@ See the full step-by-step guide:
 > * Embedding generation
 > * Regime clustering
 > * Optional Dash dashboard launch
+
+---
+
+### 📘 Regime Detection Window Delay
+
+> 📄 See: [`docs/REGIME_DETECTION_README.md`](docs/REGIME_DETECTION_README.md)
+
+Because regime labels are assigned based on **rolling windows**, the cluster ID for the final bars of a dataset **cannot be known until the full window is complete**.
+
+For example, with a `window_size = 30`:
+
+* The first 29 bars will not receive a regime ID
+* The **last 29 bars** also **do not reflect any future regime change**, since there are no forward windows to reclassify them
+
+This introduces a **natural lag** in regime detection:
+
+* New regimes will only appear after enough time has passed for the model to “observe” a full window in the new market condition.
+
+👉 For more details, see the full explanation: [`REGIME_DETECTION_README.md`](docs/REGIME_DETECTION_README.md)
 
 ---
 
