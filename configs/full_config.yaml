@@ -15,11 +15,11 @@ exclude_columns: ["Date", "Hour"]  # Remove Date/Hour for daily resolution
 
 # ✅ Embedding Settings
 output_name: EUR_USD_embeddings.npy
-window_size: 15
+window_size: 10
 stride: 1
 
 encoding_method: "sinusoidal"      # Options: 'sinusoidal', 'learnable'
-encoding_style: "stacked"      # Options: 'interleaved', 'stacked' (only for sinusoidal)
+encoding_style: "interleaved"      # Options: 'interleaved', 'stacked' (only for sinusoidal)
 # embedding_dim: 80                # Required if using encoding_method = 'learnable'
 
 # ✅ Clustering Settings

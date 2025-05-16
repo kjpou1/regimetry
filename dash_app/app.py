@@ -12,12 +12,12 @@ from regimetry.config.config import Config
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.title = "🧠 Regime Clustering Dashboard"
 
-# === Load default YAML config on app startup ===
+# === Load default config ===
 DEFAULT_CONFIG_PATH = "./configs/full_config.yaml"
 Config().load_from_yaml(DEFAULT_CONFIG_PATH)
 default_report_dir = Config().output_dir
 
-# === Helper to read Plotly HTML files ===
+# === Helper: Load HTML content ===
 def load_plotly_html(report_dir, filename):
     if not report_dir:
         return "<p>No report directory available.</p>"
@@ -27,7 +27,7 @@ def load_plotly_html(report_dir, filename):
             return f.read()
     return f"<p>Plot not found: {filename}</p>"
 
-# === Helper to render palette block ===
+# === Helper: Palette preview block ===
 def render_palette_preview(palette_name, n_clusters):
     try:
         colors = sns.color_palette(palette_name, n_colors=n_clusters).as_hex()
@@ -52,11 +52,35 @@ def render_palette_preview(palette_name, n_clusters):
         ])
     ], className="ms-3 mt-2")
 
+# === Get available report directories ===
+def get_report_dir_options():
+    root = Config().REPORTS_DIR
+    if not os.path.exists(root):
+        return []
+    return [
+        {"label": name, "value": os.path.join(root, name)}
+        for name in sorted(os.listdir(root))
+        if os.path.isdir(os.path.join(root, name))
+    ]
+
 # === Layout ===
 app.layout = dbc.Container([
     dcc.Store(id="report-dir-store", data=default_report_dir),
     
     html.H2("🧠 Regime Clustering Dashboard", className="my-4 text-center"),
+
+    dbc.Row([
+        dbc.Col([
+            html.Label("📂 Select Report Directory"),
+            dcc.Dropdown(
+                id="report-selector",
+                options=get_report_dir_options(),
+                value=default_report_dir,
+                clearable=False,
+                style={"marginBottom": "20px"}
+            )
+        ])
+    ]),
 
     dbc.Row([
         dbc.Col([
@@ -91,12 +115,11 @@ app.layout = dbc.Container([
     html.Div(id="tab-content")
 ], fluid=True)
 
-
-# === Tab Content Callback ===
+# === Main content callback ===
 @app.callback(
     Output("tab-content", "children"),
     Input("main-tabs", "active_tab"),
-    State("report-dir-store", "data")
+    Input("report-selector", "value")
 )
 def render_tab(tab, report_dir):
     if not report_dir:
@@ -123,8 +146,7 @@ def render_tab(tab, report_dir):
 
     return html.Div("🔍 Select a tab.")
 
-
-# === YAML Upload Callback ===
+# === YAML upload callback ===
 @app.callback(
     Output("report-dir-store", "data"),
     Input("yaml-upload", "contents"),
@@ -142,6 +164,6 @@ def update_config_from_upload(contents, filename):
     Config().load_from_yaml(tmp_path)
     return Config().output_dir
 
-
+# === Launch ===
 if __name__ == "__main__":
     app.run(debug=True)
