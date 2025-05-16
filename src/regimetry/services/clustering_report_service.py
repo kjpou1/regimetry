@@ -50,20 +50,12 @@ class ClusteringReportService:
         self,
         df: pd.DataFrame,
         cluster_labels: np.ndarray,
-        #cluster_labels_trimmed: np.ndarray,
         tsne_coords: np.ndarray,
         umap_coords: np.ndarray
     ):
         if not self.report_format:
             logging.info("[ClusteringReportService] Skipping report generation due to empty report_format.")
             return
-
-        # --- Apply trimmed cluster labels to df ---
-        # offset = self.config.window_size - 1
-        # df["Cluster_ID"] = np.nan
-        # df.iloc[offset:offset + len(cluster_labels_trimmed), df.columns.get_loc("Cluster_ID")] = cluster_labels_trimmed
-        # logging.info(f"[ClusteringReportService] ✅ Applied pre-trimmed cluster labels with offset={offset} to df of length {len(df)}")
-
 
         # === Matplotlib Reports ===
         if 'matplotlib' in self.report_format:
