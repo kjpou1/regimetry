@@ -63,12 +63,14 @@ class ClusteringReportService:
             self.plot_scatter_matplotlib(umap_coords, cluster_labels, "UMAP", "umap_plot.png")
             self.plot_timeline_matplotlib(cluster_labels, "timeline.png")
             self.plot_overlay_matplotlib(df, "Close", "price_overlay.png")
+            self.plot_cluster_distribution_matplotlib(cluster_labels)
 
         # === Plotly Reports ===
         if 'plotly' in self.report_format:
             self.plot_scatter_plotly(tsne_coords, cluster_labels, "t-SNE", "tsne_plot.html")
             self.plot_scatter_plotly(umap_coords, cluster_labels, "UMAP", "umap_plot.html")
             self.plot_overlay_plotly(df, "Close", "price_overlay.html")
+            self.plot_cluster_distribution_plotly(cluster_labels)
 
     def plot_scatter_matplotlib(self, coords, labels, title, filename):
         plt.figure(figsize=(10, 6))
@@ -115,6 +117,45 @@ class ClusteringReportService:
         plt.savefig(path)
         plt.close()
         logging.info(f"[matplotlib] Timeline plot saved: {path}")
+
+    def plot_cluster_distribution_matplotlib(self, labels: np.ndarray, filename: str = "cluster_distribution.png"):
+        """
+        Creates a bar plot of cluster frequency using Matplotlib.
+        """
+        plt.figure(figsize=(8, 4))
+        counts = pd.Series(labels).value_counts().sort_index()
+        bars = plt.bar(counts.index.astype(str), counts.values, color=self.palette_colors[:len(counts)])
+        plt.title("Cluster Distribution")
+        plt.xlabel("Cluster ID")
+        plt.ylabel("Number of Windows")
+        plt.grid(True, axis='y', linestyle='--', alpha=0.4)
+        plt.tight_layout()
+
+        path = os.path.join(self.output_dir, filename)
+        plt.savefig(path)
+        plt.close()
+        logging.info(f"[matplotlib] Cluster distribution saved: {path}")
+
+    def plot_cluster_distribution_plotly(self, labels: np.ndarray, filename: str = "cluster_distribution.html"):
+        """
+        Creates an interactive bar plot of cluster frequency using Plotly.
+        """
+        counts = pd.Series(labels).value_counts().sort_index()
+        df_plot = pd.DataFrame({"Cluster_ID": counts.index.astype(str), "Count": counts.values})
+
+        fig = px.bar(
+            df_plot,
+            x="Cluster_ID",
+            y="Count",
+            title="Cluster Distribution (Interactive)",
+            color="Cluster_ID",
+            color_discrete_map=self.cluster_color_map,
+            category_orders={"Cluster_ID": sorted(df_plot["Cluster_ID"].unique(), key=int, reverse=True)}
+        )
+
+        path = os.path.join(self.output_dir, filename)
+        fig.write_html(path)
+        logging.info(f"[plotly] Cluster distribution interactive saved: {path}")
 
     def plot_overlay_matplotlib(self, df, price_col, filename):
         """

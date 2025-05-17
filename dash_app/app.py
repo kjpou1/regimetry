@@ -109,6 +109,7 @@ app.layout = dbc.Container([
         dbc.Tab(label="📉 Price Overlay", tab_id="price"),
         dbc.Tab(label="🌀 t-SNE", tab_id="tsne"),
         dbc.Tab(label="🔮 UMAP", tab_id="umap"),
+        dbc.Tab(label="📊 Cluster Distribution", tab_id="distribution"),
         dbc.Tab(label="🎨 Palette Preview", tab_id="palette")
     ]),
     
@@ -139,6 +140,11 @@ def render_tab(tab, report_dir):
         return html.Iframe(
             srcDoc=load_plotly_html(report_dir, "umap_plot.html"),
             style={"width": "100%", "height": "600px", "border": "none"}
+        )
+    elif tab == "distribution":
+        return html.Iframe(
+            srcDoc=load_plotly_html(report_dir, "cluster_distribution.html"),
+            style={"width": "100%", "height": "500px", "border": "none"}
         )
     elif tab == "palette":
         cfg = Config()
