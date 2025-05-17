@@ -58,7 +58,14 @@ class Config(metaclass=SingletonMeta):
 
         self._encoding_method = os.getenv("ENCODING_METHOD", "sinusoidal")
         self._encoding_style = os.getenv("ENCODING_STYLE", "interleaved")
-        self._embedding_dim = os.getenv("EMBEDDING_DIM", None)  # or your default
+        self._embedding_dim = os.getenv("EMBEDDING_DIM", None)
+
+        self._head_size = int(os.getenv("HEAD_SIZE", 256))
+        self._num_heads = int(os.getenv("NUM_HEADS", 4))
+        self._ff_dim = int(os.getenv("FF_DIM", 128))
+        self._num_transformer_blocks = int(os.getenv("NUM_TRANSFORMER_BLOCKS", 2))
+        self._dropout = float(os.getenv("DROPOUT", 0.1))
+
 
         self._report_format = os.getenv("REPORT_FORMAT", ["matplotlib", "plotly"])  # Default to both
         if isinstance(self._report_format, str):
@@ -150,6 +157,30 @@ class Config(metaclass=SingletonMeta):
             print(f"[Config] Overriding 'embedding_dim': {data['embedding_dim']}")
             self.embedding_dim = int(data["embedding_dim"])
                             
+        if "report_palette" in data:
+            print(f"[Config] Overriding 'report_palette': {data['report_palette']}")
+            self.report_palette = data["report_palette"]
+
+        if "head_size" in data:
+            print(f"[Config] Overriding 'head_size': {data['head_size']}")
+            self.head_size = int(data["head_size"])
+
+        if "num_heads" in data:
+            print(f"[Config] Overriding 'num_heads': {data['num_heads']}")
+            self.num_heads = int(data["num_heads"])
+
+        if "ff_dim" in data:
+            print(f"[Config] Overriding 'ff_dim': {data['ff_dim']}")
+            self.ff_dim = int(data["ff_dim"])
+
+        if "num_transformer_blocks" in data:
+            print(f"[Config] Overriding 'num_transformer_blocks': {data['num_transformer_blocks']}")
+            self.num_transformer_blocks = int(data["num_transformer_blocks"])
+
+        if "dropout" in data:
+            print(f"[Config] Overriding 'dropout': {data['dropout']}")
+            self.dropout = float(data["dropout"])
+
         if "report_format" in data:
             fmt = data["report_format"]
             if isinstance(fmt, list):
@@ -157,10 +188,6 @@ class Config(metaclass=SingletonMeta):
                 self.report_format = fmt
             else:
                 raise ValueError("report_format must be a list of strings like ['matplotlib', 'plotly']")
-
-        if "report_palette" in data:
-            print(f"[Config] Overriding 'report_palette': {data['report_palette']}")
-            self.report_palette = data["report_palette"]
             
     @property
     def config_path(self):
@@ -332,6 +359,47 @@ class Config(metaclass=SingletonMeta):
     @embedding_dim.setter
     def embedding_dim(self, value: int):
         self._embedding_dim = int(value)
+
+    @property
+    def head_size(self) -> int:
+        return self._head_size
+
+    @head_size.setter
+    def head_size(self, value: int):
+        self._head_size = int(value)
+
+    @property
+    def num_heads(self) -> int:
+        return self._num_heads
+
+    @num_heads.setter
+    def num_heads(self, value: int):
+        self._num_heads = int(value)
+
+    @property
+    def ff_dim(self) -> int:
+        return self._ff_dim
+
+    @ff_dim.setter
+    def ff_dim(self, value: int):
+        self._ff_dim = int(value)
+
+    @property
+    def num_transformer_blocks(self) -> int:
+        return self._num_transformer_blocks
+
+    @num_transformer_blocks.setter
+    def num_transformer_blocks(self, value: int):
+        self._num_transformer_blocks = int(value)
+
+    @property
+    def dropout(self) -> float:
+        return self._dropout
+
+    @dropout.setter
+    def dropout(self, value: float):
+        self._dropout = float(value)
+
 
     @property
     def report_format(self) -> list[str]:

@@ -61,21 +61,16 @@ class EmbeddingPipeline:
             # STEP 4: Positional Encoding
             X = tf.convert_to_tensor(rolling_windows, dtype=tf.float32)
 
-            # Sanity check: embedding_dim required if using learnable encoding
-            if self.config.encoding_method == "learnable":
-                if not self.config.embedding_dim:
-                    raise ValueError("embedding_dim must be set when using learnable positional encoding.")
-            elif self.config.embedding_dim:
-                # Warn if user provided embedding_dim but it's not used
-                logging.warning(
-                    f"[EmbeddingPipeline] ⚠️ 'embedding_dim' ({self.config.embedding_dim}) is ignored when using sinusoidal encoding."
-                )
+            # Optional projection to match embedding_dim
+            if self.config.embedding_dim and X.shape[-1] != self.config.embedding_dim:
+                logging.info(f"🔧 Projecting input features from {X.shape[-1]} → {self.config.embedding_dim}")
+                X = tf.keras.layers.Dense(self.config.embedding_dim)(X)
 
             X_pe_final = PositionalEncoding.add(
                 X,
                 method=self.config.encoding_method,
                 encoding_style=self.config.encoding_style,
-                learnable_dim=self.config.embedding_dim if self.config.encoding_method == 'learnable' else None
+                learnable_dim=self.config.embedding_dim
             )
 
             logging.info(f"📐 Positional encoding applied: shape={X_pe_final.shape}")

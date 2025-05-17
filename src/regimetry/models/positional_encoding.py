@@ -58,9 +58,12 @@ class PositionalEncoding:
             tf.Tensor: Tensor with positional encodings added
         """
         seq_len = tf.shape(inputs)[1]
-        d_model = tf.shape(inputs)[2]
+        #d_model = tf.shape(inputs)[2]
+        if learnable_dim is None:
+            learnable_dim = inputs.shape[-1] or tf.shape(inputs)[-1]
 
         if method == 'sinusoidal':
+            d_model = learnable_dim
             if encoding_style == 'stacked':
                 original_d_model = tf.shape(inputs)[-1]
                 if original_d_model % 2 != 0:
@@ -73,10 +76,15 @@ class PositionalEncoding:
 
         elif method == 'learnable':
             if learnable_dim is None:
-                raise ValueError("learnable_dim must be set for learnable encoding.")
+                learnable_dim = inputs.shape[-1]
+                if learnable_dim is None:
+                    raise ValueError(
+                        "[PositionalEncoding] ❌ learnable_dim is None and cannot be inferred from dynamic input shape."
+                    )
             seq_len = inputs.shape[1]
             if seq_len is None:
                 raise ValueError("Sequence length must be statically defined for learnable encoding.")
+                
             pos_embedding = tf.keras.layers.Embedding(input_dim=seq_len, output_dim=learnable_dim)
             positions = tf.range(seq_len)
             pe = pos_embedding(positions)

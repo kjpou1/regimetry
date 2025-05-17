@@ -4,25 +4,34 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from regimetry.logger_manager import LoggerManager
+from regimetry.config.config import Config
+
 
 logging = LoggerManager.get_logger(__name__)
 
 
 class ModelEmbeddingService:
-    def __init__(self, input_shape, config=None):
+    def __init__(self, input_shape):
+        self.config = Config()
         self.input_shape = input_shape
-        self.config = config or {}
         self.model = self._build_model()
+
+        # Optional safety check
+        embedding_dim = self.config.embedding_dim
+        if embedding_dim is not None:
+            assert self.input_shape[-1] == embedding_dim, (
+                f"❌ Mismatch: input dim {self.input_shape[-1]} ≠ embedding_dim {embedding_dim}"
+            )
 
     def _build_model(self):
         """
         Build and return a Transformer encoder model for embedding extraction.
         """
-        head_size = self.config.get("head_size", 256)
-        num_heads = self.config.get("num_heads", 4)
-        ff_dim = self.config.get("ff_dim", 128)
-        num_blocks = self.config.get("num_transformer_blocks", 2)
-        dropout = self.config.get("dropout", 0.1)
+        head_size = self.config.head_size
+        num_heads = self.config.num_heads
+        ff_dim = self.config.ff_dim
+        num_blocks = self.config.num_transformer_blocks
+        dropout = self.config.dropout
 
         inputs = keras.Input(shape=self.input_shape)
         x = inputs
