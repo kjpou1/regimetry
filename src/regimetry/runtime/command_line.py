@@ -11,9 +11,9 @@ class CommandLine:
         """
         Parse command-line arguments and return a CommandLineArgs object.
 
-        Supports subcommands like 'ingest' and 'train'.
+        Supports subcommands like 'ingest', 'embed', and 'cluster'.
         """
-        parser = LoggingArgumentParser(description="Frostfire Chart Sifter Application")
+        parser = LoggingArgumentParser(description="Regimetry Market Regime Detection CLI")
 
         # Create subparsers for subcommands
         subparsers = parser.add_subparsers(dest="command", help="Subcommands")
