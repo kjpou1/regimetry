@@ -71,19 +71,6 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-            html.Label("📂 Select Report Directory"),
-            dcc.Dropdown(
-                id="report-selector",
-                options=get_report_dir_options(),
-                value=default_report_dir,
-                clearable=False,
-                style={"marginBottom": "20px"}
-            )
-        ])
-    ]),
-
-    dbc.Row([
-        dbc.Col([
             dcc.Upload(
                 id='yaml-upload',
                 children=html.Div([
@@ -101,6 +88,19 @@ app.layout = dbc.Container([
                     'marginBottom': '20px'
                 },
                 multiple=False
+            )
+        ])
+    ]),
+
+    dbc.Row([
+        dbc.Col([
+            html.Label("📂 Select Report Directory"),
+            dcc.Dropdown(
+                id="report-selector",
+                options=get_report_dir_options(),
+                value=default_report_dir,
+                clearable=False,
+                style={"marginBottom": "20px"}
             )
         ])
     ]),
