@@ -99,6 +99,24 @@ class RegimeClusteringPipeline:
         umap_coords = umap.fit_transform(embeddings_scaled)
         logging.info(f"🌀 UMAP complete: shape={umap_coords.shape}")
 
+        # STEP 4.5: Save t-SNE and UMAP coordinates
+        tsne_path_npy = os.path.join(self.output_dir, "tsne_coords.npy")
+        umap_path_npy = os.path.join(self.output_dir, "umap_coords.npy")
+        np.save(tsne_path_npy, tsne_coords)
+        np.save(umap_path_npy, umap_coords)
+        logging.info(f"💾 Saved t-SNE coords: {tsne_path_npy}")
+        logging.info(f"💾 Saved UMAP coords: {umap_path_npy}")
+
+        # Optional: also save as CSV for external inspection
+        tsne_path_csv = os.path.join(self.output_dir, "tsne_coords.csv")
+        umap_path_csv = os.path.join(self.output_dir, "umap_coords.csv")
+
+        pd.DataFrame(tsne_coords, columns=["x", "y"]).assign(Cluster_ID=cluster_labels).to_csv(tsne_path_csv, index=False)
+        pd.DataFrame(umap_coords, columns=["x", "y"]).assign(Cluster_ID=cluster_labels).to_csv(umap_path_csv, index=False)
+
+        logging.info(f"📄 t-SNE CSV saved: {tsne_path_csv}")
+        logging.info(f"📄 UMAP CSV saved: {umap_path_csv}")
+
         # STEP 5: attach cluster labels
         regime_df = attach_cluster_labels(regime_df, cluster_labels, window_size=self.config.window_size)
         verify_cluster_alignment(regime_df, window_size=self.config.window_size)
