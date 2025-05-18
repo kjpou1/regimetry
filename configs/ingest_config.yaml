@@ -12,6 +12,8 @@ include_columns: "*"
   # - Close
   # - ATR
   # - AHMA
-exclude_columns: ["Date", "Hour"] # We use daily candles so hour makes not sense
+exclude_columns: ["Date", "Hour", "SL_Pips", "TP1_Pips", "TP2_Pips",
+  "SL_Ticks", "TP1_Ticks", "TP2_Ticks",
+  "Stop_Loss_Price", "Take_Profit_1_Price", "Take_Profit_2_Price"] 
 #   - Predictions
 #   - Confidence

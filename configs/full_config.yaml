@@ -11,11 +11,13 @@ include_columns: "*"
 #   - Close
 #   - ATR
 #   - AHMA
-exclude_columns: ["Date", "Hour"]  # Remove Date/Hour for daily resolution
+exclude_columns: ["Date", "Hour", "SL_Pips", "TP1_Pips", "TP2_Pips",
+  "SL_Ticks", "TP1_Ticks", "TP2_Ticks",
+  "Stop_Loss_Price", "Take_Profit_1_Price", "Take_Profit_2_Price"] 
 
 # ✅ Embedding Settings
 output_name: EUR_USD_embeddings.npy
-window_size: 10
+window_size: 3
 stride: 1
 
 encoding_method: "sinusoidal"      # Options: 'sinusoidal', 'learnable'
@@ -26,7 +28,7 @@ encoding_style: "interleaved"      # Options: 'interleaved', 'stacked' (only for
 embedding_path: ./embeddings/EUR_USD_embeddings.npy
 regime_data_path: ./data/processed/regime_input.csv
 output_dir: ./reports/EUR_USD
-n_clusters: 8
+n_clusters: 10
 
 report_format: ["matplotlib", "plotly"]  # both
 # report_format: ["matplotlib"]          # only static
