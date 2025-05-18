@@ -59,18 +59,18 @@ class ClusteringReportService:
 
         # === Matplotlib Reports ===
         if 'matplotlib' in self.report_format:
-            self.plot_scatter_matplotlib(tsne_coords, cluster_labels, "t-SNE", "tsne_plot.png")
-            self.plot_scatter_matplotlib(umap_coords, cluster_labels, "UMAP", "umap_plot.png")
-            self.plot_timeline_matplotlib(cluster_labels, "timeline.png")
-            self.plot_overlay_matplotlib(df, "Close", "price_overlay.png")
-            self.plot_cluster_distribution_matplotlib(cluster_labels)
+            self.plot_scatter_matplotlib(tsne_coords, cluster_labels, "t-SNE", "tsne_mplot.png")
+            self.plot_scatter_matplotlib(umap_coords, cluster_labels, "UMAP", "umap_mplot.png")
+            self.plot_timeline_matplotlib(cluster_labels, "timeline_mplot.png")
+            self.plot_overlay_matplotlib(df, "Close", "price_overlay_mplot.png")
+            self.plot_cluster_distribution_matplotlib(cluster_labels, filename="cluster_distribution_mplot.png")
 
         # === Plotly Reports ===
         if 'plotly' in self.report_format:
             self.plot_scatter_plotly(tsne_coords, cluster_labels, "t-SNE", "tsne_plot.html")
             self.plot_scatter_plotly(umap_coords, cluster_labels, "UMAP", "umap_plot.html")
-            self.plot_overlay_plotly(df, "Close", "price_overlay.html")
-            self.plot_cluster_distribution_plotly(cluster_labels)
+            self.plot_overlay_plotly(df, "Close", "price_overlay_plot.html")
+            self.plot_cluster_distribution_plotly(cluster_labels, filename="cluster_distribution_plot.html")
 
     def plot_scatter_matplotlib(self, coords, labels, title, filename):
         plt.figure(figsize=(10, 6))
@@ -103,6 +103,11 @@ class ClusteringReportService:
         )
         path = os.path.join(self.output_dir, filename)
         fig.write_html(path)
+        # Save high-res PNG (requires kaleido)
+        png_path = path.replace(".html", ".png")
+        fig.write_image(png_path, width=1600, height=900, scale=3)
+        logging.info(f"[plotly] Price overlay high-res PNG saved: {png_path}")
+
         logging.info(f"[plotly] {title} interactive plot saved: {path}")
 
     def plot_timeline_matplotlib(self, labels, filename):
@@ -118,7 +123,7 @@ class ClusteringReportService:
         plt.close()
         logging.info(f"[matplotlib] Timeline plot saved: {path}")
 
-    def plot_cluster_distribution_matplotlib(self, labels: np.ndarray, filename: str = "cluster_distribution.png"):
+    def plot_cluster_distribution_matplotlib(self, labels: np.ndarray, filename: str):
         """
         Creates a bar plot of cluster frequency using Matplotlib.
         """
@@ -136,7 +141,7 @@ class ClusteringReportService:
         plt.close()
         logging.info(f"[matplotlib] Cluster distribution saved: {path}")
 
-    def plot_cluster_distribution_plotly(self, labels: np.ndarray, filename: str = "cluster_distribution.html"):
+    def plot_cluster_distribution_plotly(self, labels: np.ndarray, filename: str):
         """
         Creates an interactive bar plot of cluster frequency using Plotly.
         """
@@ -155,6 +160,11 @@ class ClusteringReportService:
 
         path = os.path.join(self.output_dir, filename)
         fig.write_html(path)
+        # Save high-res PNG (requires kaleido)
+        png_path = path.replace(".html", ".png")
+        fig.write_image(png_path, width=1600, height=900, scale=3)
+        logging.info(f"[plotly] Price overlay high-res PNG saved: {png_path}")
+
         logging.info(f"[plotly] Cluster distribution interactive saved: {path}")
 
     def plot_overlay_matplotlib(self, df, price_col, filename):
@@ -269,4 +279,9 @@ class ClusteringReportService:
 
         path = os.path.join(self.output_dir, filename)
         fig.write_html(path)
+        # Save high-res PNG (requires kaleido)
+        png_path = path.replace(".html", ".png")
+        fig.write_image(png_path, width=1600, height=900, scale=3)
+        logging.info(f"[plotly] Price overlay high-res PNG saved: {png_path}")
+
         logging.info(f"[plotly] Price overlay with line and hover saved: {path}")
