@@ -27,6 +27,8 @@ nbformat = "^5.10.4"
 dash = "^3.0.4"
 dash-bootstrap-components = "^2.0.2"
 
+[tool.poetry.group.dev.dependencies]
+kaleido = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
