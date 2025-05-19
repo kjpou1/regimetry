@@ -89,9 +89,6 @@ Formally:
 - Map regimes back to chart or signal data for strategy insights
 
 ---
-Here is the replacement `## 🚀 Getting Started` section for your main `README.md`, now replaced with a link to the standalone doc:
-
----
 
 ## 🚀 Getting Started
 
@@ -167,6 +164,8 @@ This will:
 > ⚠️ **Note:** Ensure that `window_size` is smaller than your dataset length.
 > If `window_size >= len(data)`, no embeddings will be produced.
 
+Ah — got it. Since `--embedding-dim` is now **used for both `learnable` and `sinusoidal`**, the description needs to be updated accordingly. Here's the revised table and footnote:
+
 ---
 
 #### 🛠 Available CLI Arguments for `embed`
@@ -177,15 +176,14 @@ This will:
 | `--output-name`       | Optional output file name for the `.npy` embeddings (default: `embeddings.npy`) |
 | `--window-size`       | Number of time steps per rolling window (default: `30`)                         |
 | `--stride`            | Step size between rolling windows (default: `1`)                                |
-| `--encoding-method`   | `sinusoidal` (default) or `learnable`                                           |
-| `--encoding-style`    | `interleaved` (default) or `stacked` (only used if method is `sinusoidal`)      |
-| `--embedding-dim`     | Required if using `learnable` encoding (defines learnable position dimension)   |
+| `--encoding-method`   | Positional encoding method: `sinusoidal` (default) or `learnable`               |
+| `--encoding-style`    | Sinusoidal encoding format: `interleaved` (default) or `stacked`                |
+| `--embedding-dim`     | Embedding dimension to use for both sinusoidal and learnable encodings          |
 | `--config`            | Optional YAML config path to override pipeline settings                         |
 | `--debug`             | Enable debug logging                                                            |
 
-> ⚠️ **Note:** `--embedding-dim` is **only used** with `--encoding-method=learnable`.
-> If specified with `sinusoidal`, it will be ignored with a warning.
-
+> ℹ️ **Note:** `--embedding-dim` applies to **both** `sinusoidal` and `learnable` encodings.
+> For `sinusoidal`, it sets the generated frequency embedding size. For `learnable`, it defines the trainable positional embedding dimension.
 
 
 ### 🔹 Cluster Regimes
