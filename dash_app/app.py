@@ -128,7 +128,7 @@ def render_tab(tab, report_dir):
 
     if tab == "price":
         return html.Iframe(
-            srcDoc=load_plotly_html(report_dir, "price_overlay.html"),
+            srcDoc=load_plotly_html(report_dir, "price_overlay_plot.html"),
             style={"width": "100%", "height": "700px", "border": "none"}
         )
     elif tab == "tsne":
@@ -143,7 +143,7 @@ def render_tab(tab, report_dir):
         )
     elif tab == "distribution":
         return html.Iframe(
-            srcDoc=load_plotly_html(report_dir, "cluster_distribution.html"),
+            srcDoc=load_plotly_html(report_dir, "cluster_distribution_plot.html"),
             style={"width": "100%", "height": "500px", "border": "none"}
         )
     elif tab == "palette":

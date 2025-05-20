@@ -46,7 +46,6 @@ class Config(metaclass=SingletonMeta):
         self.TRANSFORMER_DIR = os.path.join(self.BASE_DIR, "transformer")
 
         self._signal_input_path = os.getenv("SIGNAL_INPUT_PATH", os.path.join(self.RAW_DATA_DIR, "signal_input.csv"))
-        self._output_name = os.getenv("OUTPUT_NAME", "embeddings.npy")
         self._rhd_threshold = 0.002
 
         # Default to include all columns and exclude none
@@ -66,6 +65,9 @@ class Config(metaclass=SingletonMeta):
         self._num_transformer_blocks = int(os.getenv("NUM_TRANSFORMER_BLOCKS", 2))
         self._dropout = float(os.getenv("DROPOUT", 0.1))
 
+        self._instrument = os.getenv("INSTRUMENT", "Unknown")
+
+        self._output_name = os.getenv("OUTPUT_NAME", f"{self.experiment_id}.npy")
 
         self._report_format = os.getenv("REPORT_FORMAT", ["matplotlib", "plotly"])  # Default to both
         if isinstance(self._report_format, str):
@@ -188,7 +190,11 @@ class Config(metaclass=SingletonMeta):
                 self.report_format = fmt
             else:
                 raise ValueError("report_format must be a list of strings like ['matplotlib', 'plotly']")
-            
+
+        if "instrument" in data:
+            print(f"[Config] Overriding 'instrument': {data['instrument']}")
+            self.instrument = data["instrument"]
+
     @property
     def config_path(self):
         return self._config_path
@@ -423,6 +429,25 @@ class Config(metaclass=SingletonMeta):
         if not isinstance(value, str):
             raise ValueError("report_palette must be a string.")
         self._report_palette = value
+
+
+    @property
+    def instrument(self) -> str:
+        return self._instrument
+
+    @instrument.setter
+    def instrument(self, value: str):
+        if not isinstance(value, str):
+            raise ValueError("instrument must be a string.")
+        self._instrument = value
+
+    @property
+    def experiment_id(self) -> str:
+        method = self.encoding_method.lower()
+        dim = self.embedding_dim
+        enc = "sin" if method.startswith("sin") else "learn"
+        return f"{self.instrument}_ws{self.window_size}_{enc}{dim}_{self.encoding_style}_nc{self.n_clusters}"
+
 
     def _resolve_path(self, val: str) -> str:
         if not val:

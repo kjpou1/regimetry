@@ -63,6 +63,7 @@ class ClusteringReportService:
             self.plot_scatter_matplotlib(umap_coords, cluster_labels, "UMAP", "umap_mplot.png")
             self.plot_timeline_matplotlib(cluster_labels, "timeline_mplot.png")
             self.plot_overlay_matplotlib(df, "Close", "price_overlay_mplot.png")
+            self.plot_overlay_matplotlib_last_n(df, "Close", "price_overlay_last150_mplot.png", last_n=150)
             self.plot_cluster_distribution_matplotlib(cluster_labels, filename="cluster_distribution_mplot.png")
 
         # === Plotly Reports ===
@@ -70,6 +71,7 @@ class ClusteringReportService:
             self.plot_scatter_plotly(tsne_coords, cluster_labels, "t-SNE", "tsne_plot.html")
             self.plot_scatter_plotly(umap_coords, cluster_labels, "UMAP", "umap_plot.html")
             self.plot_overlay_plotly(df, "Close", "price_overlay_plot.html")
+            self.plot_overlay_plotly_last_n(df, "Close", "price_overlay_last150_plot.html", last_n=150)
             self.plot_cluster_distribution_plotly(cluster_labels, filename="cluster_distribution_plot.html")
 
     def plot_scatter_matplotlib(self, coords, labels, title, filename):
@@ -285,3 +287,136 @@ class ClusteringReportService:
         logging.info(f"[plotly] Price overlay high-res PNG saved: {png_path}")
 
         logging.info(f"[plotly] Price overlay with line and hover saved: {path}")
+
+
+    def plot_overlay_matplotlib_last_n(self, df, price_col, filename, last_n=150):
+        """
+        Plots a zoomed-in Matplotlib price overlay using the last N rows.
+        Cluster points are color-coded using the current matplotlib colormap.
+
+        Parameters:
+        -----------
+        df : pd.DataFrame
+            Full cluster-labeled DataFrame.
+        price_col : str
+            Column containing price data (e.g., 'Close').
+        filename : str
+            Output file name (e.g., 'price_overlay_lastn_mplot.png').
+        last_n : int
+            Number of most recent time steps to display.
+        """
+        if len(df) < last_n:
+            logging.warning(f"[plot_overlay_matplotlib_last_n] DataFrame only has {len(df)} rows. Using full data.")
+            df_filtered = df.copy()
+        else:
+            df_filtered = df.iloc[-last_n:].copy()
+
+        cluster_ids = safe_numeric_column(df_filtered, "Cluster_ID", dtype=int)
+
+        plt.figure(figsize=(14, 6))
+        plt.plot(df_filtered.index, df_filtered[price_col], label="Price", color="black", alpha=0.6)
+
+        scatter = plt.scatter(
+            df_filtered.index,
+            df_filtered[price_col],
+            c=cluster_ids,
+            cmap=self.matplotlib_cmap,
+            edgecolors="none",
+            s=16,
+            alpha=0.75
+        )
+
+        plt.colorbar(scatter, label="Cluster ID")
+        plt.title(f"Last {last_n} Bars – Close Price with Cluster Overlay")
+        plt.xlabel("Time Index")
+        plt.ylabel("Price")
+        plt.grid(True)
+        plt.tight_layout()
+
+        path = os.path.join(self.output_dir, filename)
+        plt.savefig(path)
+        plt.close()
+        logging.info(f"[matplotlib] Last {last_n} price overlay saved: {path}")
+
+
+    def plot_overlay_plotly_last_n(self, df, price_col, filename, last_n=150):
+        """
+        Plots a zoomed-in Plotly overlay of the last N rows of the clustered data.
+        Used to visualize recent regime behavior.
+
+        Parameters:
+        -----------
+        df : pd.DataFrame
+            Full cluster-labeled DataFrame.
+        price_col : str
+            Name of the price column to plot (e.g., 'Close').
+        filename : str
+            Output filename (e.g., 'price_overlay_lastn_plot.html').
+        last_n : int
+            Number of recent rows to include in the plot.
+        """
+        if len(df) < last_n:
+            logging.warning(f"[plot_overlay_plotly_last_n] DataFrame has only {len(df)} rows, using full data.")
+            df_filtered = df.copy()
+        else:
+            df_filtered = df.iloc[-last_n:].copy()
+
+        df_filtered["Index"] = df_filtered.index
+
+        # Coerce Cluster_ID to Int and back to str
+        df_filtered["Cluster_ID"] = (
+            pd.to_numeric(df_filtered["Cluster_ID"], errors="coerce")
+            .fillna(-1)
+            .astype(int)
+            .astype(str)
+        )
+
+        df_filtered["hovertemplate"] = df_filtered.apply(
+            lambda row: (
+                f"Time Index: {row.name}<br>"
+                f"Cluster: {row['Cluster_ID']}<br>"
+                f"Price: {row.get(price_col, '—'):.5f}"
+            ),
+            axis=1
+        )
+
+        price_trace = go.Scatter(
+            x=df_filtered["Index"],
+            y=df_filtered[price_col],
+            mode="lines",
+            name="Price",
+            line=dict(color="black", width=1),
+            opacity=0.5
+        )
+
+        scatter_traces = []
+        unique_cluster_ids = sorted(df_filtered["Cluster_ID"].unique(), key=int, reverse=True)
+        for cluster_id in unique_cluster_ids:
+            cluster_df = df_filtered[df_filtered["Cluster_ID"] == cluster_id]
+            scatter_traces.append(go.Scatter(
+                x=cluster_df["Index"],
+                y=cluster_df[price_col],
+                mode="markers",
+                name=f"Cluster {cluster_id}",
+                marker=dict(
+                    color=self.cluster_color_map.get(cluster_id, "gray"),
+                    size=6,
+                    opacity=0.85
+                ),
+                customdata=cluster_df["hovertemplate"],
+                hovertemplate="%{customdata}"
+            ))
+
+        fig = go.Figure(data=[price_trace] + scatter_traces)
+        fig.update_layout(
+            title=f"Last {last_n} Bars – Close Price with Cluster Overlay (Plotly)",
+            xaxis_title="Time Index",
+            yaxis_title="Price",
+            template="plotly_white",
+            legend_title="Cluster"
+        )
+
+        path = os.path.join(self.output_dir, filename)
+        fig.write_html(path)
+        fig.write_image(path.replace(".html", ".png"), width=1600, height=900, scale=3)
+        logging.info(f"[plotly] Zoomed-in overlay plot saved: {path}")

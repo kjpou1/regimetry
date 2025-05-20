@@ -27,6 +27,7 @@ from regimetry.config.config import Config
 from regimetry.logger_manager import LoggerManager
 from regimetry.services.clustering_report_service import ClusteringReportService
 from regimetry.utils.cluster_utils import attach_cluster_labels, verify_cluster_alignment
+from regimetry.services.analysis_prompt_service import AnalysisPromptService
 
 logging = LoggerManager.get_logger(__name__)
 
@@ -134,5 +135,18 @@ class RegimeClusteringPipeline:
             tsne_coords=tsne_coords,
             umap_coords=umap_coords,
         )
+
+        # STEP 8: Save analysis prompt
+
+        analysis_prompt_service = AnalysisPromptService() 
+        analysis_prompt = analysis_prompt_service.get_prompt()       
+
+        prompt_filename = f"{self.config.experiment_id}_analysis_prompt.md"
+        prompt_path = os.path.join(self.output_dir, prompt_filename)
+
+        with open(prompt_path, "w", encoding="utf-8") as f:
+            f.write(analysis_prompt)
+
+        logging.info(f"📝 Analysis prompt saved: {prompt_path}")
 
         return regime_df

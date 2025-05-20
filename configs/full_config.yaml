@@ -20,6 +20,9 @@ output_name: EUR_USD_embeddings.npy
 window_size: 3
 stride: 1
 
+# Instrument
+instrument: EUR_USD
+
 encoding_method: "sinusoidal"      # Options: 'sinusoidal', 'learnable'
 encoding_style: "interleaved"      # Options: 'interleaved', 'stacked' (only for sinusoidal)
 # embedding_dim: 80                # Required if using encoding_method = 'learnable'
