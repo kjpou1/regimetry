@@ -28,6 +28,7 @@ from regimetry.logger_manager import LoggerManager
 from regimetry.services.clustering_report_service import ClusteringReportService
 from regimetry.utils.cluster_utils import attach_cluster_labels, verify_cluster_alignment
 from regimetry.services.analysis_prompt_service import AnalysisPromptService
+from regimetry.services.pdf_report_service import PDFReportService
 
 logging = LoggerManager.get_logger(__name__)
 
@@ -149,4 +150,8 @@ class RegimeClusteringPipeline:
 
         logging.info(f"📝 Analysis prompt saved: {prompt_path}")
 
+        pdf_service = PDFReportService()
+        pdf_service.generate_pdf()
+
+        logging.info(f"📝 PDF generated")
         return regime_df

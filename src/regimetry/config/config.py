@@ -76,6 +76,8 @@ class Config(metaclass=SingletonMeta):
 
         self._report_palette = os.getenv("REPORT_PALETTE", "tab10")  # Default seaborn/mpl palette
 
+        self._report_font_path = os.getenv("REPORT_FONT_PATH", "./assets/DejaVuSans.ttf")
+
         self._ensure_directories_exist()
         Config._is_initialized = True
 
@@ -444,10 +446,25 @@ class Config(metaclass=SingletonMeta):
     @property
     def experiment_id(self) -> str:
         method = self.encoding_method.lower()
-        dim = self.embedding_dim
         enc = "sin" if method.startswith("sin") else "learn"
-        return f"{self.instrument}_ws{self.window_size}_{enc}{dim}_{self.encoding_style}_nc{self.n_clusters}"
+        dim = self.embedding_dim
 
+        parts = [
+            self.instrument,
+            f"ws{self.window_size}",
+            f"{enc}{dim}" if dim is not None else enc,
+        ]
+
+        # Only append encoding style if sinusoidal
+        if enc == "sin":
+            parts.append(self.encoding_style)
+
+        parts.append(f"nc{self.n_clusters}")
+        return "_".join(parts)
+
+    @property
+    def report_font_path(self) -> str:
+        return self._resolve_path(self._report_font_path)
 
     def _resolve_path(self, val: str) -> str:
         if not val:
