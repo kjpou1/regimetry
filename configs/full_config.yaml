@@ -15,6 +15,9 @@ exclude_columns: ["Date", "Hour", "SL_Pips", "TP1_Pips", "TP2_Pips",
   "SL_Ticks", "TP1_Ticks", "TP2_Ticks",
   "Stop_Loss_Price", "Take_Profit_1_Price", "Take_Profit_2_Price"] 
 
+deterministic: true             # ✅ Enables deterministic mode
+random_seed: 42                 # ✅ Fixed seed used in all random ops (TF, NumPy, Python)
+
 # ✅ Embedding Settings
 output_name: EUR_USD_embeddings.npy
 window_size: 3

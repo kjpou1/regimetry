@@ -41,6 +41,9 @@ class RegimeClusteringPipeline:
         """
         self.config = Config()
 
+        self.seed = self.config.get_random_seed() if self.config.deterministic else None
+        logging.info(f"{'🧬 Deterministic mode ON' if self.seed is not None else '🎲 Randomized run'} (seed={self.seed})")
+
         self.embedding_path = self.config.embedding_path
         self.regime_data_path = self.config.regime_data_path
         self.output_dir = self.config.output_dir
@@ -87,17 +90,17 @@ class RegimeClusteringPipeline:
             n_clusters=self.n_clusters,
             affinity='nearest_neighbors',
             assign_labels='kmeans',
-            random_state=42,
+            random_state=self.seed,
         )
         cluster_labels = spectral.fit_predict(embeddings_scaled)
         logging.info("🔗 Spectral clustering complete.")
 
         # STEP 4: Dimensionality reduction
-        tsne = TSNE(n_components=2, perplexity=30, n_iter=1000, random_state=42)
+        tsne = TSNE(n_components=2, perplexity=30, n_iter=1000, random_state=self.seed)
         tsne_coords = tsne.fit_transform(embeddings_scaled)
         logging.info(f"📉 t-SNE complete: shape={tsne_coords.shape}")
 
-        umap = UMAP(n_components=2, random_state=42)
+        umap = UMAP(n_components=2, random_state=self.seed)
         umap_coords = umap.fit_transform(embeddings_scaled)
         logging.info(f"🌀 UMAP complete: shape={umap_coords.shape}")
 

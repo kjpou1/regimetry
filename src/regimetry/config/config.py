@@ -78,6 +78,7 @@ class Config(metaclass=SingletonMeta):
 
         self._report_font_path = os.getenv("REPORT_FONT_PATH", "./assets/DejaVuSans.ttf")
 
+        self._deterministic = os.getenv("REGIMETRY_DETERMINISTIC", "true").lower() == "true"
         self._random_seed = int(os.getenv("REGIMETRY_RANDOM_SEED", 42))
         self._ensure_directories_exist()
         Config._is_initialized = True
@@ -197,6 +198,15 @@ class Config(metaclass=SingletonMeta):
         if "instrument" in data:
             print(f"[Config] Overriding 'instrument': {data['instrument']}")
             self.instrument = data["instrument"]
+
+        if "deterministic" in data:
+            print(f"[Config] Overriding 'deterministic': {data['deterministic']}")
+            self.deterministic = bool(data["deterministic"])
+
+        if "random_seed" in data:
+            print(f"[Config] Overriding 'random_seed': {self._random_seed} → {data['random_seed']}")
+            self.set_random_seed(int(data["random_seed"]))
+
 
     @property
     def config_path(self):
@@ -444,6 +454,16 @@ class Config(metaclass=SingletonMeta):
             raise ValueError("instrument must be a string.")
         self._instrument = value
 
+    @property
+    def deterministic(self) -> bool:
+        return self._deterministic
+
+    @deterministic.setter
+    def deterministic(self, value: bool):
+        if not isinstance(value, bool):
+            raise ValueError("deterministic must be a boolean.")
+        self._deterministic = value
+        
     def get_random_seed(self):
         return self._random_seed
 
@@ -451,7 +471,7 @@ class Config(metaclass=SingletonMeta):
         if not isinstance(value, int):
             raise ValueError("random_seed must be an integer")
         self._random_seed = value
-            
+
     @property
     def experiment_id(self) -> str:
         method = self.encoding_method.lower()

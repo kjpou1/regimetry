@@ -45,8 +45,11 @@ class EmbeddingPipeline:
         self.stride = self.config.stride
         self.data_ingestion_service = DataIngestionService()
         self.data_transformation_service = DataTransformationService()
-        seed = self.config.get_random_seed()
-        set_deterministic(seed=seed)
+        if self.config.deterministic:
+            set_deterministic(seed=self.config.get_random_seed())
+            logging.info(f"🧬 Deterministic mode enabled (seed={self.config.get_random_seed()})")
+        else:
+            logging.info("⚠️ Deterministic mode disabled — non-reproducible run")
 
     def run_pipeline(self):
         try:
