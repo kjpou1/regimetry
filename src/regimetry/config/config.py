@@ -78,6 +78,7 @@ class Config(metaclass=SingletonMeta):
 
         self._report_font_path = os.getenv("REPORT_FONT_PATH", "./assets/DejaVuSans.ttf")
 
+        self._random_seed = int(os.getenv("REGIMETRY_RANDOM_SEED", 42))
         self._ensure_directories_exist()
         Config._is_initialized = True
 
@@ -443,6 +444,14 @@ class Config(metaclass=SingletonMeta):
             raise ValueError("instrument must be a string.")
         self._instrument = value
 
+    def get_random_seed(self):
+        return self._random_seed
+
+    def set_random_seed(self, value):
+        if not isinstance(value, int):
+            raise ValueError("random_seed must be an integer")
+        self._random_seed = value
+            
     @property
     def experiment_id(self) -> str:
         method = self.encoding_method.lower()

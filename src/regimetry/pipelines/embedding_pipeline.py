@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 from datetime import datetime
 
@@ -22,6 +23,17 @@ import tensorflow as tf
 
 logging = LoggerManager.get_logger(__name__)
 
+# Ensure deterministic behavior
+def set_deterministic(seed=42):
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
+    try:
+        tf.config.experimental.enable_op_determinism()
+    except Exception:
+        pass  # May not exist in older TF versions
+
 class EmbeddingPipeline:
     """
     Embedding pipeline to transform raw data into windowed transformer embeddings.
@@ -33,6 +45,8 @@ class EmbeddingPipeline:
         self.stride = self.config.stride
         self.data_ingestion_service = DataIngestionService()
         self.data_transformation_service = DataTransformationService()
+        seed = self.config.get_random_seed()
+        set_deterministic(seed=seed)
 
     def run_pipeline(self):
         try:
