@@ -30,6 +30,7 @@
   - [🧪 Example Dataset](#-example-dataset)
   - [🛠️ Configuration Files](#️-configuration-files)
     - [📂 Example Config](#-example-config)
+  - [✅ Section: Configuration Files → Example Config](#-section-configuration-files--example-config)
     - [🧠 Usage in CLI](#-usage-in-cli)
     - [🖼️ Usage in Dash App](#️-usage-in-dash-app)
   - [🖥️ Interactive Dashboard](#️-interactive-dashboard)
@@ -266,13 +267,16 @@ signal_input_path: ./examples/EUR_USD_processed_signals.csv
 include_columns: "*"
 exclude_columns: ["Date", "Hour"]  # Remove Date/Hour for daily resolution
 
+deterministic: true                # Enables reproducible embeddings and clustering
+random_seed: 42                    # Controls randomness for TF, t-SNE, UMAP, Spectral Clustering
+
 # ✅ Embedding Settings
 output_name: EUR_USD_embeddings.npy
 window_size: 10
 stride: 1
 encoding_method: "sinusoidal"      # Options: 'sinusoidal', 'learnable'
 encoding_style: "interleaved"      # Options: 'interleaved', 'stacked'
-# embedding_dim: 80                # Required if using 'learnable'
+# embedding_dim: 80
 
 # ✅ Clustering Settings
 embedding_path: ./embeddings/EUR_USD_embeddings.npy
@@ -284,6 +288,34 @@ n_clusters: 8
 report_format: ["matplotlib", "plotly"]  # Options: [], ["matplotlib"], ["plotly"]
 report_palette: Set2                     # Any valid seaborn palette name
 ```
+
+Your `README.md` is already outstanding — clean, modular, and informative. To reflect your recent changes, here’s a **drop-in-ready update section** you can patch under:
+
+---
+
+## ✅ Section: Configuration Files → Example Config
+
+Update the example YAML to include the new deterministic settings:
+
+```yaml
+# ✅ Embedding Settings
+output_name: EUR_USD_embeddings.npy
+window_size: 10
+stride: 1
+encoding_method: "learnable"       # Options: 'sinusoidal', 'learnable'
+encoding_style: "interleaved"      # Used only for 'sinusoidal'
+
+embedding_dim: 71                  # Required for 'learnable'; optional for 'sinusoidal'
+deterministic: true                # Enables reproducible embeddings and clustering
+random_seed: 42                    # Controls randomness for TF, t-SNE, UMAP, Spectral Clustering
+```
+
+> 🧬 **Determinism Note:**  
+> When `deterministic: true`, all randomness (including Transformer, t-SNE, UMAP, Spectral Clustering) is locked using `random_seed`.  
+> This ensures identical results across re-runs with the same input data.  
+> When `false`, variability is allowed — useful for exploration or stress testing.  
+>  
+> 🔗 [Learn more → Reproducibility Controls](./docs/REPRODUCIBILITY_README.md)
 
 ---
 
