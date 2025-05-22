@@ -46,22 +46,30 @@
   - [📄 License](#-license)
   - [👤 Author](#-author)
 ---
+
 ## 📘 Overview
 
-**regimetry** is a *research-driven*, unsupervised regime detection engine for financial markets. It extracts latent structure from time-series data using deep learning embeddings and clustering, enabling traders and researchers to identify distinct behavioral phases in market activity.
+**regimetry** is a *research-grade*, unsupervised regime detection engine for financial time series. It identifies recurring patterns in market behavior by combining transformer-based embeddings with clustering techniques, enabling traders and researchers to isolate distinct phases such as trends, reversals, and volatility shifts.
 
-This project begins as a learning ground and may evolve into a core component of my trading strategy pipelines.
+Originally developed as a learning tool, `regimetry` is evolving into a core analytical component for strategy validation and signal filtering.
+
+> ⚙️ **Tech Highlights**:
+> - Transformer encoder with positional encoding
+> - Attention-based temporal modeling (windowed)
+> - Spectral clustering on learned embeddings
+> - Regime drift analysis via Markov transition modeling
 
 ---
 
 ## 🔍 What is a Regime?
 
-In `regimetry`, a **regime** is a *latent, temporally coherent pattern* in market behavior. It reflects distinct combinations of volatility, trend, momentum, and signal alignment — not defined by hand, but discovered through patterns in the data itself.
+In `regimetry`, a **regime** is a *latent, temporally structured pattern* in market behavior — characterized by combinations of volatility, trend strength, momentum shifts, and signal alignment. These are not defined by hand, but **emerge from patterns discovered in the data**.
 
 Formally:
-- Regimes are clusters in the embedding space of rolling market windows (e.g., 30 bars).
-- These clusters represent *behavioral states* the market tends to revisit.
-- The system learns these states using unsupervised learning (e.g., transformer encoder + spectral clustering).
+
+* Regimes are clusters in the embedding space of overlapping market windows (e.g., 30 bars).
+* Each embedding is generated via a Transformer encoder that learns internal structure within each window using attention over time.
+* Spectral clustering then groups these embeddings into recurring *behavioral states* the market tends to revisit.
 
 ---
 
@@ -76,8 +84,10 @@ Formally:
 
 
 ### 2. **Embedding Pipeline**
-- **Pass each window through a Transformer encoder (default),** which maps the window into a dense latent representation.  
-- This step is modular and can later be replaced with alternative architectures (e.g., autoencoders, SimCLR, CNNs).
+
+* **Each rolling window is passed through a Transformer encoder** that uses positional encoding to preserve temporal structure and self-attention to learn nonlinear dependencies within the window.
+* This produces a dense, contextualized embedding that reflects local market dynamics.
+* The architecture is modular and can be swapped with alternatives such as autoencoders, SimCLR, or CNN-based encoders.
 
 ### 3. **Clustering**
 - Standardize the embeddings  
