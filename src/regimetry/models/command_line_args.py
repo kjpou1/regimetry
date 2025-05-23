@@ -35,3 +35,10 @@ class CommandLineArgs:
     encoding_method: Optional[str] = None     # 'sinusoidal' or 'learnable'
     encoding_style: Optional[str] = None      # 'interleaved' or 'stacked' (only for sinusoidal)
     embedding_dim: Optional[int] = None       # Required if method is 'learnable'
+
+    # === Interpretability-Specific Args ===
+    input_path: Optional[str] = None          # Path to cluster-labeled CSV (used by interpret)
+    cluster_col: Optional[str] = "Cluster_ID" # Column in CSV that holds regime labels
+    save_heatmap: bool = False                # Whether to save transition heatmap PNG
+    save_csv: bool = False                    # Whether to save decision table + matrix to CSV
+    save_json: bool = False                   # Whether to generate regime metadate json file

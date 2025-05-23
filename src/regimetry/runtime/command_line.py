@@ -143,6 +143,45 @@ class CommandLine:
             help="Path to a config.yaml file defining clustering parameters.",
         )
 
+# Subcommand: interpret
+        interpret_parser = subparsers.add_parser(
+            "interpret", help="Generate regime interpretability report from clustered output."
+        )
+
+        interpret_parser.add_argument(
+            "--input-path",
+            type=str,
+            required=True,
+            help="Path to the cluster-labeled CSV file (e.g., cluster_assignments.csv)."
+        )
+        interpret_parser.add_argument(
+            "--output-dir",
+            type=str,
+            required=True,
+            help="Directory to save interpretability outputs (e.g., decision_table.csv, heatmap.png)."
+        )
+        interpret_parser.add_argument(
+            "--cluster-col",
+            type=str,
+            default="Cluster_ID",
+            help="Column name for cluster labels (default: Cluster_ID)."
+        )
+        interpret_parser.add_argument(
+            "--save-heatmap",
+            action="store_true",
+            help="Save transition matrix heatmap as PNG."
+        )
+        interpret_parser.add_argument(
+            "--save-csv",
+            action="store_true",
+            help="Save decision table and transition matrix to CSV."
+        )
+        interpret_parser.add_argument(
+            "--save-json",
+            action="store_true",
+            help="Save regime metadata for runtime use as JSON."
+        )
+
 
         # Parse the arguments
         args = parser.parse_args()
@@ -155,7 +194,7 @@ class CommandLine:
         # Return a CommandLineArgs object with parsed values
         return CommandLineArgs(
             command=args.command,
-            config=args.config,
+            config=getattr(args, "config", None),
             debug=getattr(args, "debug", False),
             signal_input_path=getattr(args, "signal_input_path", None),
             output_name=getattr(args, "output_name", None),
@@ -172,5 +211,11 @@ class CommandLine:
             encoding_method=getattr(args, "encoding_method", None),
             encoding_style=getattr(args, "encoding_style", None),
             embedding_dim=getattr(args, "embedding_dim", None),
+
+            input_path=getattr(args, "input_path", None),
+            cluster_col=getattr(args, "cluster_col", "Cluster_ID"),
+            save_heatmap=getattr(args, "save_heatmap", False),
+            save_csv=getattr(args, "save_csv", False), 
+            save_json=getattr(args, "save_json", False),
         )
 

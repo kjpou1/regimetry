@@ -8,6 +8,7 @@ from regimetry.models.command_line_args import CommandLineArgs
 from regimetry.pipelines.ingestion_pipeline import IngestionPipeline
 from regimetry.pipelines.embedding_pipeline import EmbeddingPipeline
 from regimetry.pipelines.regime_clustering_pipeline import RegimeClusteringPipeline
+from regimetry.pipelines.regime_interpretability_pipeline import run as interpret_run
 
 
 logging = LoggerManager.get_logger(__name__)
@@ -96,6 +97,9 @@ class Host:
             elif self.args.command == "cluster":
                 logging.info("Executing clustering workflow.")
                 await self.run_clustering()
+            elif self.args.command == "interpret":
+                logging.info("Executing interpretability workflow.")
+                await self.run_interpret()
             else:
                 logging.error("No valid subcommand provided.")
                 raise ValueError("Please specify a valid subcommand: 'ingest', 'embed', or 'cluster'.")
@@ -175,3 +179,23 @@ class Host:
         except Exception as e:
             logging.error(f"❌ Error during clustering: {e}")
             raise e
+
+    async def run_interpret(self):
+        """
+        Run the regime interpretability pipeline.
+        """
+        logging.info("Executing regime interpretability pipeline.")
+
+        if not self.args.input_path:
+            raise ValueError("❌ --input-path is required for interpret command.")
+        if not self.args.output_dir:
+            raise ValueError("❌ --output-dir is required for interpret command.")
+
+        interpret_run(
+            input_path=self.args.input_path,
+            output_dir=self.args.output_dir,
+            cluster_col=self.args.cluster_col or "Cluster_ID",
+            save_csv=self.args.save_csv,
+            save_heatmap=self.args.save_heatmap,
+            save_json=self.args.save_json
+        )
