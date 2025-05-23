@@ -57,11 +57,17 @@ def get_report_dir_options():
     root = Config().REPORTS_DIR
     if not os.path.exists(root):
         return []
-    return [
-        {"label": name, "value": os.path.join(root, name)}
-        for name in sorted(os.listdir(root))
-        if os.path.isdir(os.path.join(root, name))
-    ]
+
+    options = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        rel_path = os.path.relpath(dirpath, root)
+        if any(fname.endswith(".html") for fname in filenames):  # only show if plots exist
+            options.append({
+                "label": rel_path,
+                "value": os.path.join(root, rel_path)
+            })
+
+    return sorted(options, key=lambda x: x["label"])
 
 # === Layout ===
 app.layout = dbc.Container([
