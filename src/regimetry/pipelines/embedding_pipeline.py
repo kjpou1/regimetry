@@ -97,9 +97,16 @@ class EmbeddingPipeline:
             embeddings = service.embed(X_pe_final)
             logging.info(f"✅ Embeddings shape: {embeddings.shape}")
 
-            filename = self.config.output_name
-            filepath = os.path.join(self.config.EMBEDDINGS_DIR, filename)
+            if self.config.embedding_path:
+                filepath = self.config.embedding_path
+                logging.info(f"📦 Saving embeddings to {filepath} (resolved from embedding_path)")
+            else:
+                filename = self.config.output_name or f"{self.config.instrument}_embeddings.npy"
+                filepath = os.path.join(self.config.EMBEDDINGS_DIR, filename)
+                logging.info(f"📦 Saving embeddings to {filepath} (resolved from output_name)")
+
             save_array(embeddings, filepath)
+
             logging.info(f"✅ Embeddings saved: {filepath}")
 
             # Save embedding metadata (alongside the .npy file)

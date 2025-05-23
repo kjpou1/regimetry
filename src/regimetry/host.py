@@ -2,6 +2,7 @@ import asyncio
 import os
 
 from regimetry.config.config import Config
+from regimetry.config.dynamic_config_loader import DynamicConfigLoader
 from regimetry.exception import CustomException
 from regimetry.logger_manager import LoggerManager
 from regimetry.models.command_line_args import CommandLineArgs
@@ -100,6 +101,10 @@ class Host:
             elif self.args.command == "interpret":
                 logging.info("Executing interpretability workflow.")
                 await self.run_interpret()
+            elif self.args.command == "analyze":
+                logging.info("Executing dynamic analyze pipeline.")
+                await self.run_analyze()
+
             else:
                 logging.error("No valid subcommand provided.")
                 raise ValueError("Please specify a valid subcommand: 'ingest', 'embed', or 'cluster'.")
@@ -199,3 +204,49 @@ class Host:
             save_heatmap=self.args.save_heatmap,
             save_json=self.args.save_json
         )
+
+    async def run_analyze(self):
+        """
+        Dynamically run embedding and clustering pipelines based on runtime metadata.
+        Automatically skips steps if output already exists.
+        """
+        logging.info("🔍 Starting dynamic analyze pipeline")
+
+        loader = DynamicConfigLoader()
+
+        config = loader.load(
+            instrument=self.args.instrument,
+            window_size=self.args.window_size,
+            stride=self.args.stride,
+            encoding_method=self.args.encoding_method,
+            encoding_style=self.args.encoding_style,
+            embedding_dim=self.args.embedding_dim,
+            n_clusters=self.args.n_clusters,
+            export_path= os.path.join(self.config.BASE_DIR, "tmp_config.yaml"),
+            create_dirs=self.args.create_dir,
+            force=self.args.force,
+            clean=self.args.clean,
+        )
+
+        # Sync config object with injected paths
+        self.config.load_from_yaml("artifacts/tmp_config.yaml")
+
+        embedding_path = self.config.embedding_path
+        cluster_path = config["cluster_output_path"]
+
+        if self.args.force or not os.path.exists(embedding_path):
+            logging.info("🧠 Embedding not found. Running embedding pipeline.")
+            await self.run_embedding()
+        else:
+            logging.info("✅ Embedding already exists, skipping embedding step.")
+
+        if self.args.force or not os.path.exists(cluster_path):
+            logging.info("🔗 Cluster assignments not found. Running clustering pipeline.")
+            await self.run_clustering()
+        else:
+            logging.info("✅ Cluster file already exists, skipping clustering step.")
+
+        # Optionally add automatic visualization/interpret here
+        logging.info("🧾 Analyze pipeline complete. Outputs located in:")
+        logging.info(f"   Embedding: {embedding_path}")
+        logging.info(f"   Clusters : {cluster_path}")

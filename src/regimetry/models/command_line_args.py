@@ -42,3 +42,9 @@ class CommandLineArgs:
     save_heatmap: bool = False                # Whether to save transition heatmap PNG
     save_csv: bool = False                    # Whether to save decision table + matrix to CSV
     save_json: bool = False                   # Whether to generate regime metadate json file
+
+    instrument: Optional[str] = None
+    base_config: Optional[str] = None
+    create_dir: bool = False
+    force: bool = False
+    clean: bool = False    

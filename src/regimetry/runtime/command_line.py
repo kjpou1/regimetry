@@ -183,6 +183,93 @@ class CommandLine:
         )
 
 
+        # Subcommand: analyze
+        analyze_parser = subparsers.add_parser(
+            "analyze", help="Dynamically analyze an existing experiment (embed + cluster + report)"
+        )
+
+        analyze_parser.add_argument(
+            "--instrument",
+            type=str,
+            required=True,
+            help="Instrument symbol (e.g., CAD_CHF)."
+        )
+
+        analyze_parser.add_argument(
+            "--window-size",
+            type=int,
+            required=True,
+            help="Rolling window size used during embedding."
+        )
+
+        analyze_parser.add_argument(
+            "--stride",
+            type=int,
+            required=True,
+            help="Stride used in rolling window generation."
+        )
+
+        analyze_parser.add_argument(
+            "--encoding-method",
+            type=str,
+            choices=["sinusoidal", "learnable"],
+            required=True,
+            help="Type of positional encoding used."
+        )
+
+        analyze_parser.add_argument(
+            "--embedding-dim",
+            type=int,
+            required=True,
+            help="Dimensionality of the positional encoding."
+        )
+
+        analyze_parser.add_argument(
+            "--encoding-style",
+            type=str,
+            choices=["interleaved", "stacked"],
+            required=False,
+            help="Encoding style (required if encoding-method is sinusoidal)."
+        )
+
+        analyze_parser.add_argument(
+            "--n-clusters",
+            type=int,
+            required=True,
+            help="Number of clusters used during spectral clustering."
+        )
+
+        analyze_parser.add_argument(
+            "--base-config",
+            type=str,
+            required=False,
+            help="Path to instrument base config (optional if using standard naming: configs/{instrument}_base.yaml)."
+        )
+        analyze_parser.add_argument(
+            "--create-dir",
+            action="store_true",
+            help="Create output directories for embeddings and reports if they don't exist."
+        )      
+
+        analyze_parser.add_argument(
+            "--force",
+            action="store_true",
+            help="Force rerun even if output files already exist."
+        )
+
+        analyze_parser.add_argument(
+            "--clean",
+            action="store_true",
+            help="Clean output directories before running pipeline."
+        )
+
+
+        analyze_parser.add_argument(
+            "--debug",
+            action="store_true",
+            help="Enable debug mode."
+        )
+
         # Parse the arguments
         args = parser.parse_args()
 
@@ -211,11 +298,19 @@ class CommandLine:
             encoding_method=getattr(args, "encoding_method", None),
             encoding_style=getattr(args, "encoding_style", None),
             embedding_dim=getattr(args, "embedding_dim", None),
-
+            
+            # Interpret
             input_path=getattr(args, "input_path", None),
             cluster_col=getattr(args, "cluster_col", "Cluster_ID"),
             save_heatmap=getattr(args, "save_heatmap", False),
             save_csv=getattr(args, "save_csv", False), 
             save_json=getattr(args, "save_json", False),
+
+            # Fields for analyze
+            instrument=getattr(args, "instrument", None),
+            base_config=getattr(args, "base_config", None),
+            create_dir=getattr(args, "create_dir", None),
+            force=getattr(args, "force", False),
+            clean=getattr(args, "clean", False),            
         )
 
