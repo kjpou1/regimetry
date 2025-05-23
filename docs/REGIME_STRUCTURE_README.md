@@ -1,8 +1,3 @@
-Here you go — a clean, production-ready version of `docs/REGIME_STRUCTURE_README.md` that documents your full regime structure analysis pipeline:
-
----
-
-````markdown
 # 📘 Regime Structure Analysis
 
 This module performs **structural analysis** of clustered market regimes to help interpret their stability, volatility, and behavioral tendencies.
