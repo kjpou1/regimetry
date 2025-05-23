@@ -1,15 +1,17 @@
 import os
 import dash
-from dash import html, dcc, Input, Output, State
+from dash import html, dcc, Input, Output, State, ctx
 import dash_bootstrap_components as dbc
 import base64
 import tempfile
 import yaml
 import seaborn as sns
+import time
+from dash.exceptions import PreventUpdate
 
 from regimetry.config.config import Config
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
 app.title = "🧠 Regime Clustering Dashboard"
 
 # === Load default config ===
@@ -61,7 +63,7 @@ def get_report_dir_options():
     options = []
     for dirpath, dirnames, filenames in os.walk(root):
         rel_path = os.path.relpath(dirpath, root)
-        if any(fname.endswith(".html") for fname in filenames):  # only show if plots exist
+        if any(fname.endswith(".html") for fname in filenames):
             options.append({
                 "label": rel_path,
                 "value": os.path.join(root, rel_path)
@@ -101,12 +103,20 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             html.Label("📂 Select Report Directory"),
-            dcc.Dropdown(
-                id="report-selector",
-                options=get_report_dir_options(),
-                value=default_report_dir,
-                clearable=False,
-                style={"marginBottom": "20px"}
+            dcc.Loading(
+                type="default",
+                color="#0d6efd",  # Bootstrap primary
+                children=dbc.InputGroup([
+                    dcc.Dropdown(
+                        id="report-selector",
+                        options=get_report_dir_options(),
+                        value=default_report_dir,
+                        clearable=False,
+                        style={"flex": 1}
+                    ),
+                    dbc.Button("🔄 Refresh", id="refresh-button", n_clicks=0, color="secondary"),
+                    html.Div(id="refresh-status", className="ms-2", style={"lineHeight": "38px", "fontSize": "0.9rem"})
+                ], className="mb-3")
             )
         ])
     ]),
@@ -175,6 +185,32 @@ def update_config_from_upload(contents, filename):
 
     Config().load_from_yaml(tmp_path)
     return Config().output_dir
+
+# === Refresh button logic ===
+@app.callback(
+    Output("report-selector", "options"),
+    Output("refresh-button", "disabled"),
+    Output("refresh-status", "children"),
+    Input("refresh-button", "n_clicks"),
+    prevent_initial_call=True
+)
+def refresh_report_options(n_clicks):
+    if not ctx.triggered_id:
+        raise PreventUpdate
+
+    options = get_report_dir_options()
+    status_msg = f"✅ Refreshed ({len(options)} found)"
+    return options, False, status_msg
+
+# === Auto-clear status after delay ===
+@app.callback(
+    Output("refresh-status", "children", allow_duplicate=True),
+    Input("refresh-status", "children"),
+    prevent_initial_call=True
+)
+def clear_refresh_status(msg):
+    time.sleep(2.5)
+    return ""
 
 # === Launch ===
 if __name__ == "__main__":
