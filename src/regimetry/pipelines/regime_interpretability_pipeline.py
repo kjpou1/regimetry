@@ -46,12 +46,18 @@ def run(
     if save_csv:
         decision_table_path = os.path.join(output_dir, "regime_decision_table.csv")
         matrix_csv_path = os.path.join(output_dir, "transition_matrix.csv")
+        role_summary_path = os.path.join(output_dir, "cluster_role_summary.csv")
 
         decision_table.to_csv(decision_table_path, index=True)
         pd.DataFrame(service.transition_matrix).to_csv(matrix_csv_path, index=False)
 
+        # Generate and save cluster role summary
+        role_summary_df = service.generate_cluster_role_summary()
+        role_summary_df.to_csv(role_summary_path, index=False)
+
         print(f"✅ Saved decision table: {decision_table_path}")
         print(f"✅ Saved transition matrix: {matrix_csv_path}")
+        print(f"✅ Saved cluster role summary: {role_summary_path}")
 
     if save_json:
         json_path = os.path.join(output_dir, "regime_metadata.json")

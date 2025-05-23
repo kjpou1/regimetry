@@ -116,3 +116,37 @@ class RegimeInterpretabilityService:
         with open(output_path, "w") as f:
             json.dump(metadata, f, indent=2)
             
+    def generate_cluster_role_summary(self) -> pd.DataFrame:
+        """
+        Generate a per-cluster role table based on stickiness, entropy, and volatility.
+        Must be called after export_runtime_metadata or generate_decision_table().
+        """
+        decision_table = self.generate_decision_table()
+
+        role_data = []
+        for cluster_id in range(self.n_clusters):
+            row = decision_table.loc[f"Cluster {cluster_id}"]
+            entropy_val = row["Transition_Entropy"]
+            stickiness_val = row["Stickiness"]
+            is_volatile = row["Volatile?"] == "Yes"
+
+            # Role classification logic
+            if stickiness_val > 0.9 and entropy_val < 0.35:
+                role = "Trend Holder"
+                action = "📈 Hold / Extend TP"
+            elif entropy_val > 0.6:
+                role = "High-Risk / Choppy"
+                action = "❌ Avoid entries"
+            else:
+                role = "Moderate Regime"
+                action = "🚨 Tighten Stop / Quick TP"
+
+            role_data.append({
+                "Cluster": f"C{cluster_id}",
+                "Role": role,
+                "Volatility": "High" if is_volatile else "Low",
+                "Stickiness": round(stickiness_val, 3),
+                "Action": action
+            })
+
+        return pd.DataFrame(role_data)
