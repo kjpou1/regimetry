@@ -50,15 +50,19 @@
 
 ## 📘 Overview
 
-**regimetry** is a *research-grade*, unsupervised regime detection engine for financial time series. It identifies recurring patterns in market behavior by combining transformer-based embeddings with clustering techniques, enabling traders and researchers to isolate distinct phases such as trends, reversals, and volatility shifts.
+**regimetry** is a modular, unsupervised regime detection engine for financial time series — originally developed as a personal research project to explore latent structure and behavioral transitions in markets.
 
-Originally developed as a learning tool, `regimetry` is evolving into a core analytical component for strategy validation and signal filtering.
+It combines transformer-based embeddings with clustering and regime structure analysis to help identify and label recurring phases such as trends, reversals, and volatility shifts.
+
+> While built for exploratory analysis, `regimetry` may evolve into a foundational component of my broader trading strategy stack.
 
 > ⚙️ **Tech Highlights**:
-> - Transformer encoder with positional encoding
-> - Attention-based temporal modeling (windowed)
-> - Spectral clustering on learned embeddings
-> - Regime drift analysis via Markov transition modeling
+>
+> * Transformer encoder with positional encoding
+> * Attention-based temporal modeling (windowed)
+> * Spectral clustering on learned embeddings
+> * Regime structure modeling via Markov transitions, stickiness, and entropy
+
 
 ---
 
