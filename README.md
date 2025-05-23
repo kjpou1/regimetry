@@ -151,7 +151,7 @@ Run `regimetry` pipelines directly from the command line with optional overrides
 #### 🔹 Ingest Data
 
 ```bash
-python run.py ingest \
+python launch_host.py ingest \
   --signal-input-path examples/EUR_USD_processed_signals.csv
 ```
 
@@ -164,7 +164,7 @@ This will:
 ### 🔹 Generate Embeddings
 
 ```bash
-python run.py embed \
+python launch_host.py embed \
   --signal-input-path examples/EUR_USD_processed_signals.csv \
   --output-name EUR_USD_embeddings.npy \
   --window-size 30 \
@@ -207,7 +207,7 @@ Ah — got it. Since `--embedding-dim` is now **used for both `learnable` and `s
 ### 🔹 Cluster Regimes
 
 ```bash
-python run.py cluster \
+python launch_host.py cluster \
   --embedding-path embeddings/EUR_USD_embeddings.npy \
   --regime-data-path data/processed/regime_input.csv \
   --output-dir reports/EUR_USD \
@@ -244,7 +244,7 @@ This will:
 ### 🔹 Analyze Regime Structure
 
 ```bash
-python run.py interpret \
+python launch_host.py interpret \
   --input-path artifacts/reports/EUR_USD/cluster_assignments.csv \
   --output-dir artifacts/reports/EUR_USD/ \
   --save-csv \
@@ -273,7 +273,7 @@ This will:
 ### 🔹 Analyze Full Pipeline (Embed + Cluster)
 
 ```bash
-python run.py analyze \
+python launch_host.py analyze \
   --instrument EUR_USD \
   --window-size 5 \
   --stride 1 \
@@ -334,7 +334,7 @@ This file contains:
 You can run the **ingestion pipeline** on this dataset:
 
 ```bash
-python run.py ingest --signal-input-path examples/EUR_USD_processed_signals.csv
+python launch_host.py ingest --signal-input-path examples/EUR_USD_processed_signals.csv
 ````
 
 — OR —
@@ -342,7 +342,7 @@ python run.py ingest --signal-input-path examples/EUR_USD_processed_signals.csv
 Run the **embedding pipeline** to generate transformer embeddings:
 
 ```bash
-python run.py embed --signal-input-path examples/EUR_USD_processed_signals.csv
+python launch_host.py embed --signal-input-path examples/EUR_USD_processed_signals.csv
 ```
 ---
 
@@ -420,7 +420,7 @@ random_seed: 42                    # Controls randomness for TF, t-SNE, UMAP, Sp
 You can run any pipeline stage using a config override:
 
 ```bash
-python run.py cluster --config config/full_config.yaml
+python launch_host.py cluster --config config/full_config.yaml
 ```
 
 * CLI will auto-resolve relative paths (e.g., to `./data/`, `./embeddings/`)
@@ -485,7 +485,7 @@ The app will run locally at [http://localhost:8050](http://localhost:8050)
   * `report_format`
 
   > 🛈 *This is for **informational preview only** — uploading a config file does **not** affect the rendered plots.*
-  > Plots are static and must be regenerated via the CLI (`run.py cluster`) if you want different parameters applied.
+  > Plots are static and must be regenerated via the CLI (`launch_host.py cluster`) if you want different parameters applied.
 
 * **🧠 Cluster Visualizations**
 
