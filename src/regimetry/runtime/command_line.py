@@ -220,8 +220,8 @@ class CommandLine:
         analyze_parser.add_argument(
             "--embedding-dim",
             type=int,
-            required=True,
-            help="Dimensionality of the positional encoding."
+            default=None,
+            help="Optional. Dimensionality of positional encoding. If not provided, it will be inferred from input shape during runtime."
         )
 
         analyze_parser.add_argument(
