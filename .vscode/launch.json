@@ -53,6 +53,39 @@
       "program": "launch_host.py",
       "args": ["cluster", "--config", "configs/full_config.yaml"]
     },
+    {
+      "name": "Cluster Full CAD_CHF",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "launch_host.py",
+      "args": ["cluster", "--config", "configs/full_CADCHF_config.yaml"]
+    },
+    {
+      "name": "Interpret",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "launch_host.py",
+      "args": ["interpret", "--input-path", "artifacts/reports/CAD_CHF_ws5_learnable80_nc10/cluster_assignments.csv", "--output-dir", "artifacts/reports/CAD_CHF_ws5_learnable80_nc10","--save-csv","--save-heatmap","--save-json"]
+    },
+    {
+      "name": "Analyze EUR_USD",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "launch_host.py",
+      "args": [
+        "analyze",
+        "--instrument", "EUR_USD",
+        "--window-size", "5",
+        "--stride", "1",
+        "--encoding-method", "sinusoidal",
+        "--encoding-style", "interleaved",
+        "--embedding-dim", "64",
+        "--n-clusters", "12",
+        //"--create-dir"
+        "--clean"
+      ],
+      "console": "integratedTerminal"
+    },
 
   ]
 }

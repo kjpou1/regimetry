@@ -28,6 +28,8 @@
     - [🔹 Cluster Regimes](#-cluster-regimes)
       - [🛠 Available CLI Arguments for `cluster`](#-available-cli-arguments-for-cluster)
     - [🔹 Analyze Regime Structure](#-analyze-regime-structure)
+    - [🔹 Analyze Full Pipeline (Embed + Cluster)](#-analyze-full-pipeline-embed--cluster)
+      - [🛠 Available CLI Arguments for `analyze`](#-available-cli-arguments-for-analyze)
   - [🧪 Example Dataset](#-example-dataset)
   - [🛠️ Configuration Files](#️-configuration-files)
     - [📂 Example Config](#-example-config)
@@ -265,6 +267,56 @@ This will:
 > The `interpret` pipeline does **not** run embedding or clustering — it analyzes the regime structure from their output.
 
 > ℹ️ **Note:** This pipeline does not require a config file. It operates directly on a post-clustering output CSV with a `Cluster_ID` column.
+
+---
+
+### 🔹 Analyze Full Pipeline (Embed + Cluster)
+
+```bash
+python run.py analyze \
+  --instrument EUR_USD \
+  --window-size 5 \
+  --stride 1 \
+  --encoding-method sinusoidal \
+  --encoding-style interleaved \
+  --embedding-dim 64 \
+  --n-clusters 12 \
+  --create-dir \
+  --force \
+  --clean
+```
+
+This **single command**:
+
+* Loads and expands a base config (e.g., `configs/EUR_USD_base.yaml`)
+* Dynamically resolves output paths for embeddings and clustering reports
+* Creates output directories if `--create-dir` is provided
+* Forces re-run even if output exists (`--force`)
+* Cleans existing embedding/report directories before rerun (`--clean`)
+
+> 🛠 Outputs:
+>
+> * Embedding: `artifacts/embeddings/.../embedding.npy`
+> * Clustering: `artifacts/reports/.../cluster_assignments.csv`
+> * Auto-exported config: `artifacts/tmp_config.yaml`
+
+---
+
+#### 🛠 Available CLI Arguments for `analyze`
+
+| Argument            | Description                                                          |
+| ------------------- | -------------------------------------------------------------------- |
+| `--instrument`      | Instrument symbol (e.g., `EUR_USD`)                                  |
+| `--window-size`     | Rolling window size used for embedding                               |
+| `--stride`          | Step size between rolling windows                                    |
+| `--encoding-method` | Positional encoding method: `sinusoidal` or `learnable`              |
+| `--encoding-style`  | Sinusoidal encoding style: `interleaved` or `stacked`                |
+| `--embedding-dim`   | Dimensionality of the positional encoding                            |
+| `--n-clusters`      | Number of clusters for regime detection                              |
+| `--create-dir`      | Create output folders for embeddings and reports if they don’t exist |
+| `--force`           | Force re-run even if embedding or cluster outputs already exist      |
+| `--clean`           | Remove previous output folders before running                        |
+| `--debug`           | Enable debug logging                                                 |
 
 
 
