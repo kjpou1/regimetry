@@ -1,0 +1,11 @@
+Cluster,Role,Volatility,Stickiness,Action
+C0,Moderate Regime,High,0.897,🚨 Tighten Stop / Quick TP
+C1,Moderate Regime,High,0.873,🚨 Tighten Stop / Quick TP
+C2,Moderate Regime,High,0.885,🚨 Tighten Stop / Quick TP
+C3,Moderate Regime,High,0.912,🚨 Tighten Stop / Quick TP
+C4,Moderate Regime,High,0.882,🚨 Tighten Stop / Quick TP
+C5,Trend Holder,Low,0.941,📈 Hold / Extend TP
+C6,Moderate Regime,High,0.861,🚨 Tighten Stop / Quick TP
+C7,Trend Holder,Low,0.939,📈 Hold / Extend TP
+C8,High-Risk / Choppy,High,0.833,❌ Avoid entries
+C9,Moderate Regime,High,0.845,🚨 Tighten Stop / Quick TP

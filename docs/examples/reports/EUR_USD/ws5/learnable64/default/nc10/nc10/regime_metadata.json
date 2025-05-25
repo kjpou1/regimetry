@@ -1,0 +1,62 @@
+{
+  "0": {
+    "stickiness": 0.897,
+    "entropy": 0.472,
+    "volatile": true,
+    "note": "\ud83d\udfe1 Moderate regime, tighten stop"
+  },
+  "1": {
+    "stickiness": 0.873,
+    "entropy": 0.542,
+    "volatile": true,
+    "note": "\ud83d\udfe1 Moderate regime, tighten stop"
+  },
+  "2": {
+    "stickiness": 0.885,
+    "entropy": 0.447,
+    "volatile": true,
+    "note": "\ud83d\udfe1 Moderate regime, tighten stop"
+  },
+  "3": {
+    "stickiness": 0.912,
+    "entropy": 0.407,
+    "volatile": true,
+    "note": "\u2705 Trend-friendly, hold longer"
+  },
+  "4": {
+    "stickiness": 0.882,
+    "entropy": 0.445,
+    "volatile": true,
+    "note": "\ud83d\udfe1 Moderate regime, tighten stop"
+  },
+  "5": {
+    "stickiness": 0.941,
+    "entropy": 0.224,
+    "volatile": false,
+    "note": "\u2705 Trend-friendly, hold longer"
+  },
+  "6": {
+    "stickiness": 0.861,
+    "entropy": 0.56,
+    "volatile": true,
+    "note": "\ud83d\udfe1 Moderate regime, tighten stop"
+  },
+  "7": {
+    "stickiness": 0.939,
+    "entropy": 0.332,
+    "volatile": false,
+    "note": "\u2705 Trend-friendly, hold longer"
+  },
+  "8": {
+    "stickiness": 0.833,
+    "entropy": 0.689,
+    "volatile": true,
+    "note": "\ud83d\udfe1 Moderate regime, tighten stop"
+  },
+  "9": {
+    "stickiness": 0.845,
+    "entropy": 0.591,
+    "volatile": true,
+    "note": "\ud83d\udfe1 Moderate regime, tighten stop"
+  }
+}

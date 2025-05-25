@@ -1,0 +1,11 @@
+,Stickiness,Most_Likely_Next,Next_Prob,Transition_Entropy,Volatile?,Strategy_Note
+Cluster 0,0.897,Cluster 8,0.052,0.472,Yes,"🟡 Moderate regime, tighten stop"
+Cluster 1,0.873,Cluster 9,0.075,0.542,Yes,"🟡 Moderate regime, tighten stop"
+Cluster 2,0.885,Cluster 1,0.079,0.447,Yes,"🟡 Moderate regime, tighten stop"
+Cluster 3,0.912,Cluster 8,0.049,0.407,Yes,"✅ Trend-friendly, hold longer"
+Cluster 4,0.882,Cluster 1,0.066,0.445,Yes,"🟡 Moderate regime, tighten stop"
+Cluster 5,0.941,Cluster 1,0.059,0.224,No,"✅ Trend-friendly, hold longer"
+Cluster 6,0.861,Cluster 8,0.09,0.56,Yes,"🟡 Moderate regime, tighten stop"
+Cluster 7,0.939,Cluster 8,0.022,0.332,No,"✅ Trend-friendly, hold longer"
+Cluster 8,0.833,Cluster 6,0.059,0.689,Yes,"🟡 Moderate regime, tighten stop"
+Cluster 9,0.845,Cluster 1,0.11,0.591,Yes,"🟡 Moderate regime, tighten stop"
