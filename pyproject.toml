@@ -29,6 +29,8 @@ dash-bootstrap-components = "^2.0.2"
 pillow = "^11.2.1"
 kaleido = "0.2.1"
 fpdf2 = "^2.8.3"
+catboost = "^1.2.8"
+shap = "^0.47.2"
 
 [tool.poetry.group.dev.dependencies]
 kaleido = "*"
