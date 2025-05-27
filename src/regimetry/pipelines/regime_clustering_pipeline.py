@@ -2,7 +2,7 @@
 RegimeClusteringPipeline
 
 This pipeline performs unsupervised market regime detection using precomputed
-transformer embeddings. It applies clustering, dimensionality reduction, 
+transformer embeddings. It applies clustering, dimensionality reduction,
 and generates rich visual reports to help interpret structural market behaviors.
 
 ### Pipeline Steps:
@@ -16,6 +16,7 @@ and generates rich visual reports to help interpret structural market behaviors.
 """
 
 import os
+
 import numpy as np
 import pandas as pd
 from sklearn.cluster import SpectralClustering
@@ -25,10 +26,13 @@ from umap import UMAP
 
 from regimetry.config.config import Config
 from regimetry.logger_manager import LoggerManager
-from regimetry.services.clustering_report_service import ClusteringReportService
-from regimetry.utils.cluster_utils import attach_cluster_labels, verify_cluster_alignment
 from regimetry.services.analysis_prompt_service import AnalysisPromptService
+from regimetry.services.clustering_report_service import ClusteringReportService
 from regimetry.services.pdf_report_service import PDFReportService
+from regimetry.utils.cluster_utils import (
+    attach_cluster_labels,
+    verify_cluster_alignment,
+)
 
 logging = LoggerManager.get_logger(__name__)
 
@@ -42,7 +46,9 @@ class RegimeClusteringPipeline:
         self.config = Config()
 
         self.seed = self.config.get_random_seed() if self.config.deterministic else None
-        logging.info(f"{'🧬 Deterministic mode ON' if self.seed is not None else '🎲 Randomized run'} (seed={self.seed})")
+        logging.info(
+            f"{'🧬 Deterministic mode ON' if self.seed is not None else '🎲 Randomized run'} (seed={self.seed})"
+        )
 
         self.embedding_path = self.config.embedding_path
         self.regime_data_path = self.config.regime_data_path
@@ -88,9 +94,10 @@ class RegimeClusteringPipeline:
         # STEP 3: Spectral Clustering
         spectral = SpectralClustering(
             n_clusters=self.n_clusters,
-            affinity='nearest_neighbors',
-            assign_labels='kmeans',
+            affinity="nearest_neighbors",
+            assign_labels="kmeans",
             random_state=self.seed,
+            eigen_solver="arpack",
         )
         cluster_labels = spectral.fit_predict(embeddings_scaled)
         logging.info("🔗 Spectral clustering complete.")
@@ -116,14 +123,20 @@ class RegimeClusteringPipeline:
         tsne_path_csv = os.path.join(self.output_dir, "tsne_coords.csv")
         umap_path_csv = os.path.join(self.output_dir, "umap_coords.csv")
 
-        pd.DataFrame(tsne_coords, columns=["x", "y"]).assign(Cluster_ID=cluster_labels).to_csv(tsne_path_csv, index=False)
-        pd.DataFrame(umap_coords, columns=["x", "y"]).assign(Cluster_ID=cluster_labels).to_csv(umap_path_csv, index=False)
+        pd.DataFrame(tsne_coords, columns=["x", "y"]).assign(
+            Cluster_ID=cluster_labels
+        ).to_csv(tsne_path_csv, index=False)
+        pd.DataFrame(umap_coords, columns=["x", "y"]).assign(
+            Cluster_ID=cluster_labels
+        ).to_csv(umap_path_csv, index=False)
 
         logging.info(f"📄 t-SNE CSV saved: {tsne_path_csv}")
         logging.info(f"📄 UMAP CSV saved: {umap_path_csv}")
 
         # STEP 5: attach cluster labels
-        regime_df = attach_cluster_labels(regime_df, cluster_labels, window_size=self.config.window_size)
+        regime_df = attach_cluster_labels(
+            regime_df, cluster_labels, window_size=self.config.window_size
+        )
         verify_cluster_alignment(regime_df, window_size=self.config.window_size)
 
         # STEP 6: Save labeled dataset
@@ -142,8 +155,8 @@ class RegimeClusteringPipeline:
 
         # STEP 8: Save analysis prompt
 
-        analysis_prompt_service = AnalysisPromptService() 
-        analysis_prompt = analysis_prompt_service.get_prompt()       
+        analysis_prompt_service = AnalysisPromptService()
+        analysis_prompt = analysis_prompt_service.get_prompt()
 
         prompt_filename = f"{self.config.experiment_id}_analysis_prompt.md"
         prompt_path = os.path.join(self.output_dir, prompt_filename)
