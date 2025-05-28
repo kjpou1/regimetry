@@ -9,6 +9,7 @@ from sklearn.preprocessing import normalize
 from regimetry.config.config import Config
 from regimetry.logger_manager import LoggerManager
 from regimetry.models.forecast.forecast_dataset import ForecastDataset
+from regimetry.utils.forcast_utils import build_embedding_forecast_dataset
 
 logging = LoggerManager.get_logger(__name__)
 
@@ -57,13 +58,12 @@ class ForecastDatasetService:
                 f"❌ Embedding shape mismatch: expected {expected_shape}, found {embeddings.shape}"
             )
 
-        # Resolve final window and stride
+        # Resolve window and stride with CLI override warnings
         cli_window = self.config.window_size
         cli_stride = self.config.stride
         meta_window = metadata.get("window_size")
         meta_stride = metadata.get("stride")
 
-        # Use CLI if available, else fallback to metadata
         self.window_size = cli_window or meta_window
         self.stride = cli_stride or meta_stride
 
@@ -72,7 +72,6 @@ class ForecastDatasetService:
         if self.stride is None:
             raise ValueError("❌ stride must be specified via CLI or metadata.")
 
-        # Warn if CLI overrides metadata with different values
         if cli_window and meta_window and cli_window != meta_window:
             logging.warning(
                 f"⚠️ CLI window_size ({cli_window}) overrides metadata value ({meta_window})"
@@ -85,33 +84,18 @@ class ForecastDatasetService:
         cluster_df = pd.read_csv(self.cluster_assignment_path, encoding="utf-8")
         cluster_labels = cluster_df["Cluster_ID"].dropna().values
 
-        # 🔒 Validate cluster label integrity
         num_nans = np.isnan(cluster_labels).sum()
         assert num_nans == 0, f"❌ Cluster labels contain {num_nans} NaN values."
-
-        assert (
-            len(cluster_labels) == embeddings.shape[0]
-        ), f"❌ Length mismatch: {len(cluster_labels)} cluster labels vs {embeddings.shape[0]} embeddings."
-
+        assert len(cluster_labels) == embeddings.shape[0], (
+            f"❌ Length mismatch: {len(cluster_labels)} cluster labels vs "
+            f"{embeddings.shape[0]} embeddings."
+        )
         logging.info("✅ Cluster assignment checks passed.")
 
-        W, S = self.window_size, self.stride
-        X, Y, Yc = [], [], []
-
-        for t in range(W - 1, len(embeddings) - 1, S):
-            x_window = embeddings[t - W + 1 : t + 1]
-            if x_window.shape[0] != W:
-                continue
-            X.append(x_window)
-            Y.append(embeddings[t + 1])
-            Yc.append(cluster_labels[t + 1])
-
-        X = np.array(X)
-        Y = np.array(Y)
-        Yc = np.array(Yc)
-
-        if X.shape[0] == 0:
-            raise ValueError("❌ No valid training samples generated.")
+        # ✅ Build dataset using refactored logic
+        X, Y, Yc = build_embedding_forecast_dataset(
+            embeddings, cluster_labels, self.window_size, self.stride
+        )
 
         logging.info(
             f"✅ Built forecast dataset: X={X.shape}, Y={Y.shape}, Yc={Yc.shape}"
@@ -124,6 +108,6 @@ class ForecastDatasetService:
             embeddings=embeddings,
             cluster_labels=cluster_labels,
             metadata=metadata,
-            window_size=W,
-            stride=S,
+            window_size=self.window_size,
+            stride=self.stride,
         )
