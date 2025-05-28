@@ -96,6 +96,8 @@ class Config(metaclass=SingletonMeta):
         self._model_type = os.getenv("MODEL_TYPE", None)
         self._n_neighbors = int(os.getenv("N_NEIGHBORS", 5))
 
+        self._base_config = os.getenv("BASE_CONFIG", None)
+
         self._ensure_directories_exist()
         Config._is_initialized = True
 
@@ -560,6 +562,16 @@ class Config(metaclass=SingletonMeta):
         if not isinstance(value, str):
             raise ValueError("embedding_dir must be a string.")
         self._embedding_dir = value
+
+    @property
+    def base_config(self) -> str:
+        return self._base_config
+
+    @base_config.setter
+    def base_config(self, value: str):
+        if not isinstance(value, str):
+            raise ValueError("base_config must be a string.")
+        self._base_config = value
 
     @property
     def embedding_file(self) -> str:

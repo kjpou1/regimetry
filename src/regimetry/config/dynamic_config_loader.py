@@ -1,7 +1,8 @@
 import os
-import yaml
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Dict, Optional
+
+import yaml
 
 from regimetry.config.config import Config
 
@@ -25,7 +26,6 @@ class DynamicConfigLoader:
         self.config = Config()
         self.config_dir = Path(config_dir)
         self.artifacts_dir = self.config.BASE_DIR
-
 
     def load(
         self,
@@ -74,11 +74,20 @@ class DynamicConfigLoader:
         config : Dict
             Fully merged and updated configuration dictionary
         """
-        base_path = self.config_dir / f"{instrument}_base.yaml"
+        # Try to resolve base config from Config object
+        base_config = self.config.base_config
+
+        if base_config:
+            base_path = Path(base_config)
+            print(f"[Loader] Using explicitly provided base_config: {base_path}")
+        else:
+            base_path = self.config_dir / f"{instrument}_base.yaml"
+            print(f"[Loader] Using default instrument base_config: {base_path}")
+
         if not base_path.exists():
             raise FileNotFoundError(f"Base config not found: {base_path}")
 
-        with open(base_path, "r") as f:
+        with open(base_path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
         # 🔧 Inject dynamic values
@@ -99,18 +108,38 @@ class DynamicConfigLoader:
         style_key = encoding_style or "default"
         posenc_key = f"{encoding_method}{dim_key}"
 
-        embedding_rel_path = Path("embeddings") / instrument / f"ws{window_size}" / f"{posenc_key}_{style_key}" / "embedding.npy"
-        report_rel_path = Path("reports") / instrument / f"ws{window_size}" / posenc_key / style_key / f"nc{n_clusters}"
+        embedding_rel_path = (
+            Path("embeddings")
+            / instrument
+            / f"ws{window_size}"
+            / f"{posenc_key}_{style_key}"
+            / "embedding.npy"
+        )
+        report_rel_path = (
+            Path("reports")
+            / instrument
+            / f"ws{window_size}"
+            / posenc_key
+            / style_key
+            / f"nc{n_clusters}"
+        )
         cluster_rel_path = report_rel_path / "cluster_assignments.csv"
 
         # 🛠 Resolve full output paths
-        embedding_full_path = self.config._resolve_path(self.artifacts_dir / embedding_rel_path)
-        report_full_path = self.config._resolve_path(self.artifacts_dir / report_rel_path)
-        cluster_full_path = self.config._resolve_path(self.artifacts_dir / cluster_rel_path)
+        embedding_full_path = self.config._resolve_path(
+            self.artifacts_dir / embedding_rel_path
+        )
+        report_full_path = self.config._resolve_path(
+            self.artifacts_dir / report_rel_path
+        )
+        cluster_full_path = self.config._resolve_path(
+            self.artifacts_dir / cluster_rel_path
+        )
 
         # 🔥 Optionally clean old directories
         if clean:
             import shutil
+
             if embedding_full_path.parent.exists():
                 shutil.rmtree(embedding_full_path.parent, ignore_errors=True)
             if report_full_path.exists():
@@ -124,8 +153,12 @@ class DynamicConfigLoader:
         # 📦 Save all paths as resolved (Config will resolve again internally if needed)
         config["embedding_path"] = str(embedding_full_path)
         config["report_dir"] = str(report_full_path)
-        config["cluster_output_path"] = self.config._resolve_path(str(cluster_full_path))
-        config["regime_data_path"] = self.config._resolve_path(str(Path("data/processed/regime_input.csv")))
+        config["cluster_output_path"] = self.config._resolve_path(
+            str(cluster_full_path)
+        )
+        config["regime_data_path"] = self.config._resolve_path(
+            str(Path("data/processed/regime_input.csv"))
+        )
         config["output_dir"] = self.config._resolve_path(str(report_full_path))
 
         # 📝 Optionally export merged config for inspection

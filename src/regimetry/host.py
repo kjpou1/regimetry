@@ -92,6 +92,10 @@ class Host:
             logging.info(f"Overriding instrument from CLI: {args.instrument}")
             self.config.instrument = args.instrument
 
+        if args.base_config:
+            logging.info(f"Overriding base_config from CLI: {args.base_config}")
+            self.config.base_config = args.base_config
+
     def run(self):
         """
         Synchronously run the asynchronous run_async method.
