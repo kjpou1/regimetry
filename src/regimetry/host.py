@@ -6,11 +6,11 @@ from regimetry.config.dynamic_config_loader import DynamicConfigLoader
 from regimetry.exception import CustomException
 from regimetry.logger_manager import LoggerManager
 from regimetry.models.command_line_args import CommandLineArgs
-from regimetry.pipelines.ingestion_pipeline import IngestionPipeline
 from regimetry.pipelines.embedding_pipeline import EmbeddingPipeline
+from regimetry.pipelines.forecast_trainer_pipeline import ForecastTrainerPipeline
+from regimetry.pipelines.ingestion_pipeline import IngestionPipeline
 from regimetry.pipelines.regime_clustering_pipeline import RegimeClusteringPipeline
 from regimetry.pipelines.regime_interpretability_pipeline import run as interpret_run
-
 
 logging = LoggerManager.get_logger(__name__)
 
@@ -35,14 +35,16 @@ class Host:
         if args.config:
             self.config.config_path = args.config
             self.config.load_from_yaml(args.config)
-            
+
         if args.signal_input_path:
-            logging.info(f"Overriding signal_input_path from CLI: {args.signal_input_path}")
+            logging.info(
+                f"Overriding signal_input_path from CLI: {args.signal_input_path}"
+            )
             self.config.signal_input_path = args.signal_input_path
 
         if args.output_name:
             logging.info(f"Overriding output_name from CLI: {args.output_name}")
-            self.config.output_name = args.output_name   
+            self.config.output_name = args.output_name
 
         if args.window_size:
             logging.info(f"Overriding window_size from CLI: {args.window_size}")
@@ -64,8 +66,31 @@ class Host:
             logging.info(f"Overriding embedding_dim from CLI: {args.embedding_dim}")
             self.config.embedding_dim = args.embedding_dim
 
+        if args.forecast_embedding_dir:
+            logging.info(
+                f"Overriding embedding_dir from CLI: {args.forecast_embedding_dir}"
+            )
+            self.config.embedding_dir = args.forecast_embedding_dir
 
-                                
+        if args.forecast_cluster_assignment_path:
+            logging.info(
+                f"Overriding cluster_assignment_path from CLI: {args.forecast_cluster_assignment_path}"
+            )
+            self.config.cluster_assignment_path = args.forecast_cluster_assignment_path
+
+        if args.forecast_model_type:
+            logging.info(f"Overriding model_type from CLI: {args.forecast_model_type}")
+            self.config.model_type = args.forecast_model_type
+
+        if args.forecast_n_neighbors is not None:
+            logging.info(
+                f"Overriding n_neighbors from CLI: {args.forecast_n_neighbors}"
+            )
+            self.config.n_neighbors = args.forecast_n_neighbors
+
+        if args.instrument:
+            logging.info(f"Overriding instrument from CLI: {args.instrument}")
+            self.config.instrument = args.instrument
 
     def run(self):
         """
@@ -104,10 +129,20 @@ class Host:
             elif self.args.command == "analyze":
                 logging.info("Executing dynamic analyze pipeline.")
                 await self.run_analyze()
+            elif self.args.command == "forecast":
+                if self.args.forecast_command == "train":
+                    logging.info("Executing forecast training pipeline.")
+                    await self.run_forecast_train()
+                else:
+                    raise ValueError(
+                        "Please specify a valid subcommand under 'forecast': 'train'"
+                    )
 
             else:
                 logging.error("No valid subcommand provided.")
-                raise ValueError("Please specify a valid subcommand: 'ingest', 'embed', or 'cluster'.")
+                raise ValueError(
+                    "Please specify a valid subcommand: 'ingest', 'embed', or 'cluster'."
+                )
 
         except CustomException as e:
             logging.error("A custom error occurred during host operations: %s", e)
@@ -125,17 +160,13 @@ class Host:
         logging.info("Initializing ingestion pipeline...")
 
         # You can optionally parameterize these via CLI args later
-        pipeline = IngestionPipeline(
-            val_size=0.2,
-            test_size=0.2
-        )
+        pipeline = IngestionPipeline(val_size=0.2, test_size=0.2)
 
         result = pipeline.run()
 
         logging.info("Ingestion pipeline result:")
         logging.info(f"  Full Dataset: {result['output_path']}")
         logging.info(f"  Features: {result['features']}")
-
 
     async def run_embedding(self):
         """
@@ -157,14 +188,29 @@ class Host:
         try:
             # CLI > config.yaml precedence
             if self.args.embedding_path:
+                logging.info(
+                    f"Overriding embedding_path from CLI: {self.args.embedding_path}"
+                )
                 self.config.embedding_path = self.args.embedding_path
+
             if self.args.regime_data_path:
+                logging.info(
+                    f"Overriding regime_data_path from CLI: {self.args.regime_data_path}"
+                )
                 self.config.regime_data_path = self.args.regime_data_path
+
             if self.args.output_dir:
+                logging.info(f"Overriding output_dir from CLI: {self.args.output_dir}")
                 self.config.output_dir = self.args.output_dir
+
             if self.args.window_size:
+                logging.info(
+                    f"Overriding window_size from CLI: {self.args.window_size}"
+                )
                 self.config.window_size = self.args.window_size
+
             if self.args.n_clusters:
+                logging.info(f"Overriding n_clusters from CLI: {self.args.n_clusters}")
                 self.config.n_clusters = self.args.n_clusters
 
             # Manual validation of required fields
@@ -176,7 +222,9 @@ class Host:
             if not self.config.output_dir:
                 missing.append("output_dir")
             if missing:
-                raise ValueError(f"Missing required config fields: {', '.join(missing)}")
+                raise ValueError(
+                    f"Missing required config fields: {', '.join(missing)}"
+                )
 
             pipeline = RegimeClusteringPipeline()
             pipeline.run()
@@ -202,7 +250,7 @@ class Host:
             cluster_col=self.args.cluster_col or "Cluster_ID",
             save_csv=self.args.save_csv,
             save_heatmap=self.args.save_heatmap,
-            save_json=self.args.save_json
+            save_json=self.args.save_json,
         )
 
     async def run_analyze(self):
@@ -222,7 +270,7 @@ class Host:
             encoding_style=self.args.encoding_style,
             embedding_dim=self.args.embedding_dim,
             n_clusters=self.args.n_clusters,
-            export_path= os.path.join(self.config.BASE_DIR, "tmp_config.yaml"),
+            export_path=os.path.join(self.config.BASE_DIR, "tmp_config.yaml"),
             create_dirs=self.args.create_dir,
             force=self.args.force,
             clean=self.args.clean,
@@ -241,7 +289,9 @@ class Host:
             logging.info("✅ Embedding already exists, skipping embedding step.")
 
         if self.args.force or not os.path.exists(cluster_path):
-            logging.info("🔗 Cluster assignments not found. Running clustering pipeline.")
+            logging.info(
+                "🔗 Cluster assignments not found. Running clustering pipeline."
+            )
             await self.run_clustering()
         else:
             logging.info("✅ Cluster file already exists, skipping clustering step.")
@@ -250,3 +300,10 @@ class Host:
         logging.info("🧾 Analyze pipeline complete. Outputs located in:")
         logging.info(f"   Embedding: {embedding_path}")
         logging.info(f"   Clusters : {cluster_path}")
+
+    async def run_forecast_train(self):
+        """
+        Run the forecast training pipeline to predict next-cluster embedding and classification.
+        """
+        forecast_pipeline = ForecastTrainerPipeline()
+        forecast_pipeline.run()

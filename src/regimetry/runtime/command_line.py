@@ -13,7 +13,9 @@ class CommandLine:
 
         Supports subcommands like 'ingest', 'embed', and 'cluster'.
         """
-        parser = LoggingArgumentParser(description="Regimetry Market Regime Detection CLI")
+        parser = LoggingArgumentParser(
+            description="Regimetry Market Regime Detection CLI"
+        )
 
         # Create subparsers for subcommands
         subparsers = parser.add_subparsers(dest="command", help="Subcommands")
@@ -41,7 +43,8 @@ class CommandLine:
 
         # Subcommand: embed (was "train")
         embed_parser = subparsers.add_parser(
-            "embed", help="Generate transformer embeddings for clustering or visualization."
+            "embed",
+            help="Generate transformer embeddings for clustering or visualization.",
         )
         embed_parser.add_argument(
             "--signal-input-path",
@@ -65,7 +68,7 @@ class CommandLine:
             type=str,
             choices=["sinusoidal", "learnable"],
             default=None,
-            help="Type of positional encoding to use (default: sinusoidal)."
+            help="Type of positional encoding to use (default: sinusoidal).",
         )
 
         embed_parser.add_argument(
@@ -73,14 +76,14 @@ class CommandLine:
             type=str,
             choices=["interleaved", "stacked"],
             default=None,
-            help="Sinusoidal encoding style: 'interleaved' (Vaswani) or 'stacked'."
+            help="Sinusoidal encoding style: 'interleaved' (Vaswani) or 'stacked'.",
         )
 
         embed_parser.add_argument(
             "--embedding-dim",
             type=int,
             default=None,
-            help="Dimensionality of learnable positional encoding (required if method=learnable)."
+            help="Dimensionality of learnable positional encoding (required if method=learnable).",
         )
 
         embed_parser.add_argument(
@@ -104,7 +107,8 @@ class CommandLine:
 
         # Subcommand: cluster
         cluster_parser = subparsers.add_parser(
-            "cluster", help="Cluster transformer embeddings and visualize market regimes."
+            "cluster",
+            help="Cluster transformer embeddings and visualize market regimes.",
         )
         cluster_parser.add_argument(
             "--embedding-path",
@@ -143,70 +147,71 @@ class CommandLine:
             help="Path to a config.yaml file defining clustering parameters.",
         )
 
-# Subcommand: interpret
+        # Subcommand: interpret
         interpret_parser = subparsers.add_parser(
-            "interpret", help="Generate regime interpretability report from clustered output."
+            "interpret",
+            help="Generate regime interpretability report from clustered output.",
         )
 
         interpret_parser.add_argument(
             "--input-path",
             type=str,
             required=True,
-            help="Path to the cluster-labeled CSV file (e.g., cluster_assignments.csv)."
+            help="Path to the cluster-labeled CSV file (e.g., cluster_assignments.csv).",
         )
         interpret_parser.add_argument(
             "--output-dir",
             type=str,
             required=True,
-            help="Directory to save interpretability outputs (e.g., decision_table.csv, heatmap.png)."
+            help="Directory to save interpretability outputs (e.g., decision_table.csv, heatmap.png).",
         )
         interpret_parser.add_argument(
             "--cluster-col",
             type=str,
             default="Cluster_ID",
-            help="Column name for cluster labels (default: Cluster_ID)."
+            help="Column name for cluster labels (default: Cluster_ID).",
         )
         interpret_parser.add_argument(
             "--save-heatmap",
             action="store_true",
-            help="Save transition matrix heatmap as PNG."
+            help="Save transition matrix heatmap as PNG.",
         )
         interpret_parser.add_argument(
             "--save-csv",
             action="store_true",
-            help="Save decision table and transition matrix to CSV."
+            help="Save decision table and transition matrix to CSV.",
         )
         interpret_parser.add_argument(
             "--save-json",
             action="store_true",
-            help="Save regime metadata for runtime use as JSON."
+            help="Save regime metadata for runtime use as JSON.",
         )
-
 
         # Subcommand: analyze
         analyze_parser = subparsers.add_parser(
-            "analyze", help="Dynamically analyze an existing experiment (embed + cluster + report)"
+            "analyze",
+            help="Dynamically analyze an existing experiment (embed + cluster + report)",
         )
 
         analyze_parser.add_argument(
             "--instrument",
             type=str,
             required=True,
-            help="Instrument symbol (e.g., CAD_CHF)."
+            help="Instrument symbol (e.g., CAD_CHF).",
         )
 
         analyze_parser.add_argument(
             "--window-size",
             type=int,
             required=True,
-            help="Rolling window size used during embedding."
+            help="Rolling window size used during embedding.",
         )
 
         analyze_parser.add_argument(
             "--stride",
             type=int,
             required=True,
-            help="Stride used in rolling window generation."
+            help="Stride used in rolling window generation.",
         )
 
         analyze_parser.add_argument(
@@ -214,14 +219,14 @@ class CommandLine:
             type=str,
             choices=["sinusoidal", "learnable"],
             required=True,
-            help="Type of positional encoding used."
+            help="Type of positional encoding used.",
         )
 
         analyze_parser.add_argument(
             "--embedding-dim",
             type=int,
             default=None,
-            help="Optional. Dimensionality of positional encoding. If not provided, it will be inferred from input shape during runtime."
+            help="Optional. Dimensionality of positional encoding. If not provided, it will be inferred from input shape during runtime.",
         )
 
         analyze_parser.add_argument(
@@ -229,45 +234,126 @@ class CommandLine:
             type=str,
             choices=["interleaved", "stacked"],
             required=False,
-            help="Encoding style (required if encoding-method is sinusoidal)."
+            help="Encoding style (required if encoding-method is sinusoidal).",
         )
 
         analyze_parser.add_argument(
             "--n-clusters",
             type=int,
             required=True,
-            help="Number of clusters used during spectral clustering."
+            help="Number of clusters used during spectral clustering.",
         )
 
         analyze_parser.add_argument(
             "--base-config",
             type=str,
             required=False,
-            help="Path to instrument base config (optional if using standard naming: configs/{instrument}_base.yaml)."
+            help="Path to instrument base config (optional if using standard naming: configs/{instrument}_base.yaml).",
         )
         analyze_parser.add_argument(
             "--create-dir",
             action="store_true",
-            help="Create output directories for embeddings and reports if they don't exist."
-        )      
+            help="Create output directories for embeddings and reports if they don't exist.",
+        )
 
         analyze_parser.add_argument(
             "--force",
             action="store_true",
-            help="Force rerun even if output files already exist."
+            help="Force rerun even if output files already exist.",
         )
 
         analyze_parser.add_argument(
             "--clean",
             action="store_true",
-            help="Clean output directories before running pipeline."
+            help="Clean output directories before running pipeline.",
         )
 
-
         analyze_parser.add_argument(
+            "--debug", action="store_true", help="Enable debug mode."
+        )
+
+        ##### forecaster subcommand
+        # Subcommand: forecast
+        forecast_parser = subparsers.add_parser(
+            "forecast", help="Forecast-related operations: train, predict, evaluate"
+        )
+        forecast_subparsers = forecast_parser.add_subparsers(
+            dest="forecast_command", help="Forecast subcommands"
+        )
+
+        # Sub-subcommand: forecast train
+        forecast_train_parser = forecast_subparsers.add_parser(
+            "train", help="Train a next-regime forecaster model"
+        )
+
+        forecast_train_parser.add_argument(
+            "--embedding-dir",  # ✅ NEW
+            type=str,
+            required=True,
+            help="Path to directory containing embeddings.npy and metadata.json",
+        )
+
+        forecast_train_parser.add_argument(
+            "--cluster-assignment-path",
+            type=str,
+            required=True,
+            help="Path to cluster assignment CSV containing Cluster_ID column.",
+        )
+
+        forecast_train_parser.add_argument(
+            "--window-size",
+            type=int,
+            default=None,
+            help="Size of rolling input window for forecasting model.",
+        )
+
+        forecast_train_parser.add_argument(
+            "--stride",
+            type=int,
+            default=None,
+            help="Stride to apply when creating rolling windows.",
+        )
+
+        forecast_train_parser.add_argument(
+            "--model-type",
+            type=str,
+            choices=["stratum", "stratum_attn", "stratum_bi", "stratum_hydra"],
+            required=True,
+            help="Forecaster model architecture to train.",
+        )
+
+        forecast_train_parser.add_argument(
+            "--n-neighbors",
+            type=int,
+            default=5,
+            help="Number of neighbors to use for KNN cluster classification.",
+        )
+
+        forecast_train_parser.add_argument(
+            "--instrument",
+            type=str,
+            required=True,
+            help="Instrument name for saving forecast artifacts (e.g., EUR_USD).",
+        )
+
+        forecast_train_parser.add_argument(
+            "--output-dir",
+            type=str,
+            default=None,
+            help="Optional override for saving forecast artifacts (default: artifacts/forecast_models/[INSTRUMENT]/).",
+        )
+
+        forecast_train_parser.add_argument(
+            "--config",
+            type=str,
+            required=False,
+            help="Path to a config.yaml file defining clustering parameters.",
+        )
+
+        forecast_train_parser.add_argument(
             "--debug",
             action="store_true",
-            help="Enable debug mode."
+            help="Enable debug logging during forecast training.",
         )
 
         # Parse the arguments
@@ -281,36 +367,41 @@ class CommandLine:
         # Return a CommandLineArgs object with parsed values
         return CommandLineArgs(
             command=args.command,
+            forecast_command=getattr(args, "forecast_command", None),
             config=getattr(args, "config", None),
             debug=getattr(args, "debug", False),
             signal_input_path=getattr(args, "signal_input_path", None),
             output_name=getattr(args, "output_name", None),
-
             # Embedding and clustering shared args
             embedding_path=getattr(args, "embedding_path", None),
             regime_data_path=getattr(args, "regime_data_path", None),
             output_dir=getattr(args, "output_dir", None),
-            window_size=getattr(args, "window_size", None),  # Leave as None to allow Config fallback
+            window_size=getattr(
+                args, "window_size", None
+            ),  # Leave as None to allow Config fallback
             stride=getattr(args, "stride", None),
             n_clusters=getattr(args, "n_clusters", None),
-
             # Positional Encoding overrides
             encoding_method=getattr(args, "encoding_method", None),
             encoding_style=getattr(args, "encoding_style", None),
             embedding_dim=getattr(args, "embedding_dim", None),
-            
             # Interpret
             input_path=getattr(args, "input_path", None),
             cluster_col=getattr(args, "cluster_col", "Cluster_ID"),
             save_heatmap=getattr(args, "save_heatmap", False),
-            save_csv=getattr(args, "save_csv", False), 
+            save_csv=getattr(args, "save_csv", False),
             save_json=getattr(args, "save_json", False),
-
             # Fields for analyze
             instrument=getattr(args, "instrument", None),
             base_config=getattr(args, "base_config", None),
             create_dir=getattr(args, "create_dir", None),
             force=getattr(args, "force", False),
-            clean=getattr(args, "clean", False),            
+            clean=getattr(args, "clean", False),
+            # Forecast train subcommand arguments
+            forecast_embedding_dir=getattr(args, "embedding_dir", None),
+            forecast_cluster_assignment_path=getattr(
+                args, "cluster_assignment_path", None
+            ),
+            forecast_model_type=getattr(args, "model_type", None),
+            forecast_n_neighbors=getattr(args, "n_neighbors", 5),
         )
-
