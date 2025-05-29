@@ -1,12 +1,13 @@
 # src/regimetry/services/clustering_report_service.py
 
 import os
+
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
-import seaborn as sns
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import seaborn as sns
 from matplotlib.colors import ListedColormap
 
 from regimetry.config.config import Config
@@ -33,16 +34,33 @@ class ClusteringReportService:
         self.palette_name = getattr(self.config, "report_palette", "tab10")
         self.n_clusters = getattr(self.config, "n_clusters", 8)
 
-        # Build consistent color mappings
+    def _set_cluster_colors(self, cluster_labels: np.ndarray):
+        """
+        Ensures consistent cluster color mapping using only the cluster IDs present.
+        """
+        unique_cluster_ids = sorted(np.unique(cluster_labels).astype(int))
         try:
-            palette = sns.color_palette(self.palette_name, n_colors=self.n_clusters).as_hex()
-            self.cluster_color_map = {str(i): color for i, color in enumerate(palette)}
+            palette = sns.color_palette(
+                self.palette_name, n_colors=len(unique_cluster_ids)
+            ).as_hex()
+            self.cluster_color_map = {
+                str(cid): color for cid, color in zip(unique_cluster_ids, palette)
+            }
             self.palette_colors = list(self.cluster_color_map.values())
             self.matplotlib_cmap = ListedColormap(self.palette_colors)
-        except Exception:
-            logging.warning(f"[ClusteringReportService] Invalid palette '{self.palette_name}', defaulting to 'tab10'")
-            fallback = sns.color_palette("tab10", n_colors=self.n_clusters).as_hex()
-            self.cluster_color_map = {str(i): color for i, color in enumerate(fallback)}
+            logging.info(
+                f"[ColorMap] Cluster-to-color mapping updated for {len(unique_cluster_ids)} clusters."
+            )
+        except Exception as e:
+            logging.warning(
+                f"[ColorMap] Failed to load palette '{self.palette_name}', falling back to 'tab10'. Error: {e}"
+            )
+            fallback = sns.color_palette(
+                "tab10", n_colors=len(unique_cluster_ids)
+            ).as_hex()
+            self.cluster_color_map = {
+                str(cid): color for cid, color in zip(unique_cluster_ids, fallback)
+            }
             self.palette_colors = list(self.cluster_color_map.values())
             self.matplotlib_cmap = ListedColormap(self.palette_colors)
 
@@ -51,32 +69,60 @@ class ClusteringReportService:
         df: pd.DataFrame,
         cluster_labels: np.ndarray,
         tsne_coords: np.ndarray,
-        umap_coords: np.ndarray
+        umap_coords: np.ndarray,
     ):
         if not self.report_format:
-            logging.info("[ClusteringReportService] Skipping report generation due to empty report_format.")
+            logging.info(
+                "[ClusteringReportService] Skipping report generation due to empty report_format."
+            )
             return
 
+        # 🔄 Dynamically update color mapping based on present cluster IDs
+        self._set_cluster_colors(cluster_labels)
+
         # === Matplotlib Reports ===
-        if 'matplotlib' in self.report_format:
-            self.plot_scatter_matplotlib(tsne_coords, cluster_labels, "t-SNE", "tsne_mplot.png")
-            self.plot_scatter_matplotlib(umap_coords, cluster_labels, "UMAP", "umap_mplot.png")
+        if "matplotlib" in self.report_format:
+            self.plot_scatter_matplotlib(
+                tsne_coords, cluster_labels, "t-SNE", "tsne_mplot.png"
+            )
+            self.plot_scatter_matplotlib(
+                umap_coords, cluster_labels, "UMAP", "umap_mplot.png"
+            )
             self.plot_timeline_matplotlib(cluster_labels, "timeline_mplot.png")
             self.plot_overlay_matplotlib(df, "Close", "price_overlay_mplot.png")
-            self.plot_overlay_matplotlib_last_n(df, "Close", "price_overlay_last150_mplot.png", last_n=150)
-            self.plot_cluster_distribution_matplotlib(cluster_labels, filename="cluster_distribution_mplot.png")
+            self.plot_overlay_matplotlib_last_n(
+                df, "Close", "price_overlay_last150_mplot.png", last_n=150
+            )
+            self.plot_cluster_distribution_matplotlib(
+                cluster_labels, filename="cluster_distribution_mplot.png"
+            )
 
         # === Plotly Reports ===
-        if 'plotly' in self.report_format:
-            self.plot_scatter_plotly(tsne_coords, cluster_labels, "t-SNE", "tsne_plot.html")
-            self.plot_scatter_plotly(umap_coords, cluster_labels, "UMAP", "umap_plot.html")
+        if "plotly" in self.report_format:
+            self.plot_scatter_plotly(
+                tsne_coords, cluster_labels, "t-SNE", "tsne_plot.html"
+            )
+            self.plot_scatter_plotly(
+                umap_coords, cluster_labels, "UMAP", "umap_plot.html"
+            )
             self.plot_overlay_plotly(df, "Close", "price_overlay_plot.html")
-            self.plot_overlay_plotly_last_n(df, "Close", "price_overlay_last150_plot.html", last_n=150)
-            self.plot_cluster_distribution_plotly(cluster_labels, filename="cluster_distribution_plot.html")
+            self.plot_overlay_plotly_last_n(
+                df, "Close", "price_overlay_last150_plot.html", last_n=150
+            )
+            self.plot_cluster_distribution_plotly(
+                cluster_labels, filename="cluster_distribution_plot.html"
+            )
 
     def plot_scatter_matplotlib(self, coords, labels, title, filename):
         plt.figure(figsize=(10, 6))
-        scatter = plt.scatter(coords[:, 0], coords[:, 1], c=labels, cmap=self.matplotlib_cmap, edgecolors='none', alpha=0.8)
+        scatter = plt.scatter(
+            coords[:, 0],
+            coords[:, 1],
+            c=labels,
+            cmap=self.matplotlib_cmap,
+            edgecolors="none",
+            alpha=0.8,
+        )
         plt.title(f"{title} Visualization")
         plt.xlabel(f"{title} Component 1")
         plt.ylabel(f"{title} Component 2")
@@ -89,19 +135,21 @@ class ClusteringReportService:
         logging.info(f"[matplotlib] {title} plot saved: {path}")
 
     def plot_scatter_plotly(self, coords, labels, title, filename):
-        df_plot = pd.DataFrame(coords, columns=['x', 'y'])
-        df_plot['Cluster_ID'] = labels.astype(str)
-        unique_cluster_ids = sorted(df_plot['Cluster_ID'].unique(), key=int, reverse=True)
+        df_plot = pd.DataFrame(coords, columns=["x", "y"])
+        df_plot["Cluster_ID"] = labels.astype(str)
+        unique_cluster_ids = sorted(
+            df_plot["Cluster_ID"].unique(), key=int, reverse=True
+        )
         category_orders = {"Cluster_ID": unique_cluster_ids}
 
         fig = px.scatter(
             df_plot,
-            x='x',
-            y='y',
-            color='Cluster_ID',
+            x="x",
+            y="y",
+            color="Cluster_ID",
             title=f"{title} Visualization (Plotly)",
             color_discrete_map=self.cluster_color_map,
-            category_orders=category_orders
+            category_orders=category_orders,
         )
         path = os.path.join(self.output_dir, filename)
         fig.write_html(path)
@@ -114,7 +162,7 @@ class ClusteringReportService:
 
     def plot_timeline_matplotlib(self, labels, filename):
         plt.figure(figsize=(14, 4))
-        plt.plot(labels, marker='o')
+        plt.plot(labels, marker="o")
         plt.title("Cluster Regimes Over Time")
         plt.xlabel("Time Index")
         plt.ylabel("Cluster ID")
@@ -131,11 +179,15 @@ class ClusteringReportService:
         """
         plt.figure(figsize=(8, 4))
         counts = pd.Series(labels).value_counts().sort_index()
-        bars = plt.bar(counts.index.astype(str), counts.values, color=self.palette_colors[:len(counts)])
+        bars = plt.bar(
+            counts.index.astype(str),
+            counts.values,
+            color=self.palette_colors[: len(counts)],
+        )
         plt.title("Cluster Distribution")
         plt.xlabel("Cluster ID")
         plt.ylabel("Number of Windows")
-        plt.grid(True, axis='y', linestyle='--', alpha=0.4)
+        plt.grid(True, axis="y", linestyle="--", alpha=0.4)
         plt.tight_layout()
 
         path = os.path.join(self.output_dir, filename)
@@ -148,7 +200,9 @@ class ClusteringReportService:
         Creates an interactive bar plot of cluster frequency using Plotly.
         """
         counts = pd.Series(labels).value_counts().sort_index()
-        df_plot = pd.DataFrame({"Cluster_ID": counts.index.astype(str), "Count": counts.values})
+        df_plot = pd.DataFrame(
+            {"Cluster_ID": counts.index.astype(str), "Count": counts.values}
+        )
 
         fig = px.bar(
             df_plot,
@@ -157,7 +211,11 @@ class ClusteringReportService:
             title="Cluster Distribution (Interactive)",
             color="Cluster_ID",
             color_discrete_map=self.cluster_color_map,
-            category_orders={"Cluster_ID": sorted(df_plot["Cluster_ID"].unique(), key=int, reverse=True)}
+            category_orders={
+                "Cluster_ID": sorted(
+                    df_plot["Cluster_ID"].unique(), key=int, reverse=True
+                )
+            },
         )
 
         path = os.path.join(self.output_dir, filename)
@@ -187,7 +245,7 @@ class ClusteringReportService:
             cmap=self.matplotlib_cmap,
             edgecolors="none",
             s=16,
-            alpha=0.75
+            alpha=0.75,
         )
 
         plt.colorbar(scatter, label="Cluster ID")
@@ -201,7 +259,7 @@ class ClusteringReportService:
         plt.savefig(path)
         plt.close()
         logging.info(f"[matplotlib] Price overlay saved: {path}")
-        
+
     def plot_overlay_plotly(self, df, price_col, filename):
         """
         Plots a Plotly price overlay with cluster-colored scatter markers and rich hover templates.
@@ -245,30 +303,34 @@ class ClusteringReportService:
             mode="lines",
             name="Price",
             line=dict(color="black", width=1),
-            opacity=0.5
+            opacity=0.5,
         )
 
         # === Cluster Markers ===
         scatter_traces = []
-        unique_cluster_ids = sorted(df_filtered["Cluster_ID"].unique(), key=int, reverse=True)
+        unique_cluster_ids = sorted(
+            df_filtered["Cluster_ID"].unique(), key=int, reverse=True
+        )
         for cluster_id in unique_cluster_ids:
             cluster_df = df_filtered[df_filtered["Cluster_ID"] == cluster_id]
             logging.info(f"[Cluster Trace] ID: {cluster_id} → {len(cluster_df)} points")
             if cluster_df.empty:
                 continue
-            scatter_traces.append(go.Scatter(
-                x=cluster_df["Index"],
-                y=cluster_df[price_col],
-                mode="markers",
-                name=f"Cluster {cluster_id}",
-                marker=dict(
-                    color=self.cluster_color_map.get(cluster_id, "gray"),
-                    size=6,
-                    opacity=0.8
-                ),
-                customdata=cluster_df["hovertemplate"],
-                hovertemplate="%{customdata}"
-            ))
+            scatter_traces.append(
+                go.Scatter(
+                    x=cluster_df["Index"],
+                    y=cluster_df[price_col],
+                    mode="markers",
+                    name=f"Cluster {cluster_id}",
+                    marker=dict(
+                        color=self.cluster_color_map.get(cluster_id, "gray"),
+                        size=6,
+                        opacity=0.8,
+                    ),
+                    customdata=cluster_df["hovertemplate"],
+                    hovertemplate="%{customdata}",
+                )
+            )
 
         fig = go.Figure(data=[price_trace] + scatter_traces)
         fig.update_layout(
@@ -276,7 +338,7 @@ class ClusteringReportService:
             xaxis_title="Time Index",
             yaxis_title="Price",
             template="plotly_white",
-            legend_title="Cluster"
+            legend_title="Cluster",
         )
 
         path = os.path.join(self.output_dir, filename)
@@ -287,7 +349,6 @@ class ClusteringReportService:
         logging.info(f"[plotly] Price overlay high-res PNG saved: {png_path}")
 
         logging.info(f"[plotly] Price overlay with line and hover saved: {path}")
-
 
     def plot_overlay_matplotlib_last_n(self, df, price_col, filename, last_n=150):
         """
@@ -306,7 +367,9 @@ class ClusteringReportService:
             Number of most recent time steps to display.
         """
         if len(df) < last_n:
-            logging.warning(f"[plot_overlay_matplotlib_last_n] DataFrame only has {len(df)} rows. Using full data.")
+            logging.warning(
+                f"[plot_overlay_matplotlib_last_n] DataFrame only has {len(df)} rows. Using full data."
+            )
             df_filtered = df.copy()
         else:
             df_filtered = df.iloc[-last_n:].copy()
@@ -314,7 +377,13 @@ class ClusteringReportService:
         cluster_ids = safe_numeric_column(df_filtered, "Cluster_ID", dtype=int)
 
         plt.figure(figsize=(14, 6))
-        plt.plot(df_filtered.index, df_filtered[price_col], label="Price", color="black", alpha=0.6)
+        plt.plot(
+            df_filtered.index,
+            df_filtered[price_col],
+            label="Price",
+            color="black",
+            alpha=0.6,
+        )
 
         scatter = plt.scatter(
             df_filtered.index,
@@ -323,7 +392,7 @@ class ClusteringReportService:
             cmap=self.matplotlib_cmap,
             edgecolors="none",
             s=16,
-            alpha=0.75
+            alpha=0.75,
         )
 
         plt.colorbar(scatter, label="Cluster ID")
@@ -337,7 +406,6 @@ class ClusteringReportService:
         plt.savefig(path)
         plt.close()
         logging.info(f"[matplotlib] Last {last_n} price overlay saved: {path}")
-
 
     def plot_overlay_plotly_last_n(self, df, price_col, filename, last_n=150):
         """
@@ -356,7 +424,9 @@ class ClusteringReportService:
             Number of recent rows to include in the plot.
         """
         if len(df) < last_n:
-            logging.warning(f"[plot_overlay_plotly_last_n] DataFrame has only {len(df)} rows, using full data.")
+            logging.warning(
+                f"[plot_overlay_plotly_last_n] DataFrame has only {len(df)} rows, using full data."
+            )
             df_filtered = df.copy()
         else:
             df_filtered = df.iloc[-last_n:].copy()
@@ -377,7 +447,7 @@ class ClusteringReportService:
                 f"Cluster: {row['Cluster_ID']}<br>"
                 f"Price: {row.get(price_col, '—'):.5f}"
             ),
-            axis=1
+            axis=1,
         )
 
         price_trace = go.Scatter(
@@ -386,26 +456,30 @@ class ClusteringReportService:
             mode="lines",
             name="Price",
             line=dict(color="black", width=1),
-            opacity=0.5
+            opacity=0.5,
         )
 
         scatter_traces = []
-        unique_cluster_ids = sorted(df_filtered["Cluster_ID"].unique(), key=int, reverse=True)
+        unique_cluster_ids = sorted(
+            df_filtered["Cluster_ID"].unique(), key=int, reverse=True
+        )
         for cluster_id in unique_cluster_ids:
             cluster_df = df_filtered[df_filtered["Cluster_ID"] == cluster_id]
-            scatter_traces.append(go.Scatter(
-                x=cluster_df["Index"],
-                y=cluster_df[price_col],
-                mode="markers",
-                name=f"Cluster {cluster_id}",
-                marker=dict(
-                    color=self.cluster_color_map.get(cluster_id, "gray"),
-                    size=6,
-                    opacity=0.85
-                ),
-                customdata=cluster_df["hovertemplate"],
-                hovertemplate="%{customdata}"
-            ))
+            scatter_traces.append(
+                go.Scatter(
+                    x=cluster_df["Index"],
+                    y=cluster_df[price_col],
+                    mode="markers",
+                    name=f"Cluster {cluster_id}",
+                    marker=dict(
+                        color=self.cluster_color_map.get(cluster_id, "gray"),
+                        size=6,
+                        opacity=0.85,
+                    ),
+                    customdata=cluster_df["hovertemplate"],
+                    hovertemplate="%{customdata}",
+                )
+            )
 
         fig = go.Figure(data=[price_trace] + scatter_traces)
         fig.update_layout(
@@ -413,7 +487,7 @@ class ClusteringReportService:
             xaxis_title="Time Index",
             yaxis_title="Price",
             template="plotly_white",
-            legend_title="Cluster"
+            legend_title="Cluster",
         )
 
         path = os.path.join(self.output_dir, filename)
