@@ -29,6 +29,7 @@ from regimetry.logger_manager import LoggerManager
 from regimetry.services.analysis_prompt_service import AnalysisPromptService
 from regimetry.services.clustering_report_service import ClusteringReportService
 from regimetry.services.pdf_report_service import PDFReportService
+from regimetry.services.regime_assignment_service import RegimeAssignmentService
 from regimetry.utils.cluster_utils import (
     attach_cluster_labels,
     verify_cluster_alignment,
@@ -133,16 +134,18 @@ class RegimeClusteringPipeline:
         logging.info(f"📄 t-SNE CSV saved: {tsne_path_csv}")
         logging.info(f"📄 UMAP CSV saved: {umap_path_csv}")
 
-        # STEP 5: attach cluster labels
-        regime_df = attach_cluster_labels(
-            regime_df, cluster_labels, window_size=self.config.window_size
-        )
-        verify_cluster_alignment(regime_df, window_size=self.config.window_size)
+        # # STEP 5: attach cluster labels
+        # regime_df = attach_cluster_labels(
+        #     regime_df, cluster_labels, window_size=self.config.window_size
+        # )
+        # verify_cluster_alignment(regime_df, window_size=self.config.window_size)
 
-        # STEP 6: Save labeled dataset
-        cluster_path = os.path.join(self.output_dir, "cluster_assignments.csv")
-        regime_df.to_csv(cluster_path, index=False)
-        logging.info(f"💾 Cluster assignments saved: {cluster_path}")
+        # # STEP 6: Save labeled dataset
+        # cluster_path = os.path.join(self.output_dir, "cluster_assignments.csv")
+        # regime_df.to_csv(cluster_path, index=False)
+        # logging.info(f"💾 Cluster assignments saved: {cluster_path}")
+        assignment_service = RegimeAssignmentService()
+        regime_df = assignment_service.assign_and_align(regime_df, cluster_labels)
 
         # STEP 7: Generate reports
         report_service = ClusteringReportService()
