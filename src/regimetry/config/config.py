@@ -42,6 +42,7 @@ class Config(metaclass=SingletonMeta):
         self.PROCESSED_DATA_DIR = os.path.join(self.BASE_DIR, "data", "processed")
         self.EMBEDDINGS_DIR = os.path.join(self.BASE_DIR, "embeddings")
         self.TRANSFORMER_DIR = os.path.join(self.BASE_DIR, "transformer")
+        self.BASELINE_METADATA_DIR = os.path.join(self.BASE_DIR, "baseline_metadata")
 
         self._signal_input_path = os.getenv(
             "SIGNAL_INPUT_PATH", os.path.join(self.RAW_DATA_DIR, "signal_input.csv")
@@ -97,6 +98,9 @@ class Config(metaclass=SingletonMeta):
         self._n_neighbors = int(os.getenv("N_NEIGHBORS", 5))
 
         self._base_config = os.getenv("BASE_CONFIG", None)
+        self._baseline_metadata_dir = os.getenv(
+            "BASELINE_METADATA_DIR", self.BASELINE_METADATA_DIR
+        )
 
         self._ensure_directories_exist()
         Config._is_initialized = True
@@ -112,6 +116,7 @@ class Config(metaclass=SingletonMeta):
                 self.LOG_DIR,
                 self.REPORTS_DIR,
                 self.HISTORY_DIR,
+                self.BASELINE_METADATA_DIR,
             ]
         )
 
@@ -261,6 +266,12 @@ class Config(metaclass=SingletonMeta):
         if "embedding_dir" in data:
             print(f"[Config] Overriding 'embedding_dir': {data['embedding_dir']}")
             self.embedding_dir = data["embedding_dir"]
+
+        if "baseline_metadata_dir" in data:
+            print(
+                f"[Config] Overriding 'baseline_metadata_dir': {data['baseline_metadata_dir']}"
+            )
+            self.baseline_metadata_dir = data["baseline_metadata_dir"]
 
     @property
     def config_path(self):
@@ -580,6 +591,17 @@ class Config(metaclass=SingletonMeta):
     @property
     def embedding_metadata_path(self) -> str:
         return os.path.join(self.embedding_dir, "embedding_metadata.json")
+
+    @property
+    def baseline_metadata_dir(self) -> str:
+        val = getattr(self, "_baseline_metadata_dir", None)
+        return self._resolve_path(val)
+
+    @baseline_metadata_dir.setter
+    def baseline_metadata_dir(self, value: str):
+        if not isinstance(value, str):
+            raise ValueError("baseline_metadata_dir must be a string path")
+        self._baseline_metadata_dir = value
 
     @property
     def experiment_id(self) -> str:

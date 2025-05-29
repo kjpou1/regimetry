@@ -109,20 +109,30 @@ class DynamicConfigLoader:
         posenc_key = f"{encoding_method}{dim_key}"
 
         embedding_rel_path = (
-            Path("embeddings")
+            Path(self.config.EMBEDDINGS_DIR)
             / instrument
             / f"ws{window_size}"
             / f"{posenc_key}_{style_key}"
             / "embedding.npy"
         )
         report_rel_path = (
-            Path("reports")
+            Path(self.config.REPORTS_DIR)
             / instrument
             / f"ws{window_size}"
             / posenc_key
             / style_key
             / f"nc{n_clusters}"
         )
+
+        baseline_metadata_rel_dir = (
+            Path(self.config.BASELINE_METADATA_DIR)
+            / instrument
+            / f"ws{window_size}"
+            / posenc_key
+            / style_key
+            / f"nc{n_clusters}"
+        )
+
         cluster_rel_path = report_rel_path / "cluster_assignments.csv"
 
         # 🛠 Resolve full output paths
@@ -134,6 +144,9 @@ class DynamicConfigLoader:
         )
         cluster_full_path = self.config._resolve_path(
             self.artifacts_dir / cluster_rel_path
+        )
+        baseline_metadata_full_dir = self.config._resolve_path(
+            self.artifacts_dir / baseline_metadata_rel_dir
         )
 
         # 🔥 Optionally clean old directories
@@ -149,6 +162,7 @@ class DynamicConfigLoader:
         if create_dirs or force:
             embedding_full_path.parent.mkdir(parents=True, exist_ok=True)
             report_full_path.mkdir(parents=True, exist_ok=True)
+            baseline_metadata_full_dir.mkdir(parents=True, exist_ok=True)
 
         # 📦 Save all paths as resolved (Config will resolve again internally if needed)
         config["embedding_path"] = str(embedding_full_path)
@@ -160,6 +174,7 @@ class DynamicConfigLoader:
             str(Path("data/processed/regime_input.csv"))
         )
         config["output_dir"] = self.config._resolve_path(str(report_full_path))
+        config["baseline_metadata_dir"] = str(baseline_metadata_full_dir)
 
         # 📝 Optionally export merged config for inspection
         if export_path:
