@@ -62,11 +62,12 @@ class RegimeClusteringPipeline:
     def run(self):
         """
         Executes the full regime clustering pipeline:
-        - Loads and scales embeddings
-        - Applies Spectral Clustering
-        - Computes dimensionality reductions (t-SNE, UMAP)
-        - Attaches cluster labels to original data
-        - Saves labeled dataset and visualizations
+        1. Load and standardize embeddings
+        2. Apply spectral clustering
+        3. Reduce dimensions via t-SNE and UMAP
+        4. Assign and align cluster labels
+        5. Generate clustering reports and visualizations
+        6. Save prompt and PDF analysis
         """
         logging.info("🚀 Starting regime clustering pipeline")
 
@@ -74,25 +75,20 @@ class RegimeClusteringPipeline:
         embeddings = np.load(self.embedding_path)
         logging.info(f"📥 Loaded embeddings: shape={embeddings.shape}")
 
-        # STEP 1.5: Validate embedding alignment with expected window size
+        # STEP 1.5: Validate alignment
         regime_df = pd.read_csv(self.regime_data_path)
-        expected_embedding_len = len(regime_df) - self.config.window_size + 1
-
-        if embeddings.shape[0] != expected_embedding_len:
+        expected_len = len(regime_df) - self.window_size + 1
+        if embeddings.shape[0] != expected_len:
             raise ValueError(
-                f"[❌] Embedding window mismatch:\n"
-                f"    → Config window_size = {self.config.window_size}\n"
-                f"    → Regime input rows = {len(regime_df)}\n"
-                f"    → Expected embeddings = {expected_embedding_len}\n"
-                f"    → Found embeddings = {embeddings.shape[0]}\n\n"
-                f"💡 Re-run embedding generation with correct window_size or fix the config."
+                f"[❌] Embedding mismatch:\n"
+                f"    → Expected: {expected_len}, Got: {embeddings.shape[0]}"
             )
 
-        # STEP 2: Standardize embeddings
+        # STEP 2: Standardize
         scaler = StandardScaler()
         embeddings_scaled = scaler.fit_transform(embeddings)
 
-        # STEP 3: Spectral Clustering
+        # STEP 3: Clustering
         spectral = SpectralClustering(
             n_clusters=self.n_clusters,
             affinity="nearest_neighbors",
@@ -101,76 +97,51 @@ class RegimeClusteringPipeline:
             eigen_solver="arpack",
         )
         cluster_labels = spectral.fit_predict(embeddings_scaled)
-        logging.info("🔗 Spectral clustering complete.")
+        logging.info("🔗 Spectral clustering complete")
 
         # STEP 4: Dimensionality reduction
         tsne = TSNE(n_components=2, perplexity=30, n_iter=1000, random_state=self.seed)
         tsne_coords = tsne.fit_transform(embeddings_scaled)
-        logging.info(f"📉 t-SNE complete: shape={tsne_coords.shape}")
 
         umap = UMAP(n_components=2, random_state=self.seed)
         umap_coords = umap.fit_transform(embeddings_scaled)
-        logging.info(f"🌀 UMAP complete: shape={umap_coords.shape}")
 
-        # STEP 4.5: Save t-SNE and UMAP coordinates
-        tsne_path_npy = os.path.join(self.output_dir, "tsne_coords.npy")
-        umap_path_npy = os.path.join(self.output_dir, "umap_coords.npy")
-        np.save(tsne_path_npy, tsne_coords)
-        np.save(umap_path_npy, umap_coords)
-        logging.info(f"💾 Saved t-SNE coords: {tsne_path_npy}")
-        logging.info(f"💾 Saved UMAP coords: {umap_path_npy}")
-
-        # Optional: also save as CSV for external inspection
-        tsne_path_csv = os.path.join(self.output_dir, "tsne_coords.csv")
-        umap_path_csv = os.path.join(self.output_dir, "umap_coords.csv")
+        # Save t-SNE/UMAP results
+        np.save(os.path.join(self.output_dir, "tsne_coords.npy"), tsne_coords)
+        np.save(os.path.join(self.output_dir, "umap_coords.npy"), umap_coords)
 
         pd.DataFrame(tsne_coords, columns=["x", "y"]).assign(
             Cluster_ID=cluster_labels
-        ).to_csv(tsne_path_csv, index=False)
+        ).to_csv(os.path.join(self.output_dir, "tsne_coords.csv"), index=False)
         pd.DataFrame(umap_coords, columns=["x", "y"]).assign(
             Cluster_ID=cluster_labels
-        ).to_csv(umap_path_csv, index=False)
+        ).to_csv(os.path.join(self.output_dir, "umap_coords.csv"), index=False)
 
-        logging.info(f"📄 t-SNE CSV saved: {tsne_path_csv}")
-        logging.info(f"📄 UMAP CSV saved: {umap_path_csv}")
-
-        # # STEP 5: attach cluster labels
-        # regime_df = attach_cluster_labels(
-        #     regime_df, cluster_labels, window_size=self.config.window_size
-        # )
-        # verify_cluster_alignment(regime_df, window_size=self.config.window_size)
-
-        # # STEP 6: Save labeled dataset
-        # cluster_path = os.path.join(self.output_dir, "cluster_assignments.csv")
-        # regime_df.to_csv(cluster_path, index=False)
-        # logging.info(f"💾 Cluster assignments saved: {cluster_path}")
+        # STEP 5: Align & attach labels
         assignment_service = RegimeAssignmentService()
         regime_df = assignment_service.assign_and_align(regime_df, cluster_labels)
 
-        # STEP 7: Generate reports
-        report_service = ClusteringReportService()
-        report_service.generate_all(
+        # STEP 6: Report generation
+        ClusteringReportService().generate_all(
             df=regime_df,
             cluster_labels=cluster_labels,
             tsne_coords=tsne_coords,
             umap_coords=umap_coords,
         )
 
-        # STEP 8: Save analysis prompt
+        # STEP 7: Prompt
+        prompt_text = AnalysisPromptService().get_prompt()
+        with open(
+            os.path.join(
+                self.output_dir, f"{self.config.experiment_id}_analysis_prompt.md"
+            ),
+            "w",
+            encoding="utf-8",
+        ) as f:
+            f.write(prompt_text)
 
-        analysis_prompt_service = AnalysisPromptService()
-        analysis_prompt = analysis_prompt_service.get_prompt()
+        # STEP 8: PDF
+        PDFReportService().generate_pdf()
 
-        prompt_filename = f"{self.config.experiment_id}_analysis_prompt.md"
-        prompt_path = os.path.join(self.output_dir, prompt_filename)
-
-        with open(prompt_path, "w", encoding="utf-8") as f:
-            f.write(analysis_prompt)
-
-        logging.info(f"📝 Analysis prompt saved: {prompt_path}")
-
-        pdf_service = PDFReportService()
-        pdf_service.generate_pdf()
-
-        logging.info(f"📝 PDF generated")
+        logging.info("🏁 Regime clustering pipeline complete.")
         return regime_df
