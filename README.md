@@ -21,6 +21,7 @@
     - [4. **Visualization \& Interpretation**](#4-visualization--interpretation)
   - [🚀 Getting Started](#-getting-started)
     - [📘 Regime Detection Window Delay](#-regime-detection-window-delay)
+  - [📚 Documentation](#-documentation)
   - [📟 Command Line Usage](#-command-line-usage)
       - [🔹 Ingest Data](#-ingest-data)
     - [🔹 Generate Embeddings](#-generate-embeddings)
@@ -140,6 +141,17 @@ This introduces a **natural lag** in regime detection:
 * New regimes will only appear after enough time has passed for the model to “observe” a full window in the new market condition.
 
 👉 For more details, see the full explanation: [`REGIME_DETECTION_README.md`](docs/REGIME_DETECTION_README.md)
+
+---
+
+## 📚 Documentation
+
+* [📘 Getting Started](docs/GETTING_STARTED_README.md)
+  *Step-by-step setup, from ingestion to visualization.*
+* [🧠 Regime Detection Window Logic](docs/REGIME_DETECTION_README.md)
+  *Explains the natural lag from using rolling windows in clustering.*
+* [🧭 Regime Assignment & Label Alignment](docs/REGIME_ASSIGNMENT_README.md)
+  *Details how Spectral Clustering labels are aligned across runs using the Hungarian algorithm, with persistent baseline mapping and cluster color stability.*
 
 ---
 
