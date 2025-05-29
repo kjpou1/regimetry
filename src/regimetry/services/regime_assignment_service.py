@@ -43,7 +43,7 @@ class RegimeAssignmentService:
             regime_df: DataFrame with final aligned cluster assignments.
         """
         logger.info("🧱 Attaching cluster labels to regime data...")
-        regime_df = attach_cluster_labels(regime_df, cluster_labels, self.window_size)
+        regime_df = attach_cluster_labels(regime_df, cluster_labels)
         verify_cluster_alignment(regime_df, self.window_size)
 
         # Save pre-mapped regime file for inspection/debugging

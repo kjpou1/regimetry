@@ -1,46 +1,23 @@
-import pandas as pd
-import numpy as np
 import logging
+
+import numpy as np
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-def attach_cluster_labels(df: pd.DataFrame, cluster_labels: np.ndarray, window_size: int) -> tuple[pd.DataFrame, np.ndarray]:
+
+def attach_cluster_labels(df: pd.DataFrame, cluster_labels: np.ndarray) -> pd.DataFrame:
     """
-    Safely attach cluster labels to a DataFrame, aligned based on window size.
-    Returns both the updated df and the actual assigned (trimmed) cluster_labels.
-
-    Parameters:
-    ----------
-    df : pd.DataFrame
-        The full regime input used to generate embeddings.
-    cluster_labels : np.ndarray
-        1D array of cluster assignments (raw, before trimming).
-    window_size : int
-        Rolling window size used to generate embeddings.
-
-    Returns:
-    -------
-    tuple
-        (df_with_cluster_column, cluster_labels_trimmed_aligned)
+    Trim the DataFrame to the same number of rows as cluster_labels and attach them directly.
+    Assumes df has already been filtered to valid rows used for embedding.
     """
     df = df.copy()
-    offset = window_size - 1
-    expected = len(df) - offset
+    n = len(cluster_labels)
+    df_trimmed = df.iloc[-n:].copy()
+    df_trimmed["Cluster_ID"] = pd.Series(cluster_labels, dtype="Int64").values
 
-    if len(cluster_labels) > expected:
-        logger.warning(f"[attach_cluster_labels] ⚠️ Trimming cluster_labels from {len(cluster_labels)} to {expected}")
-        cluster_labels = cluster_labels[-expected:]
-    elif len(cluster_labels) < expected:
-        raise ValueError(f"[attach_cluster_labels] ❌ Cluster label length mismatch: expected {expected}, got {len(cluster_labels)}")
-
-    df["Cluster_ID"] = pd.NA
-    df.loc[df.index[offset:offset + len(cluster_labels)], "Cluster_ID"] = pd.Series(cluster_labels, dtype="Int64").values
-
-    logger.info(f"[attach_cluster_labels] ✅ Cluster labels aligned with offset={offset}, assigned={len(cluster_labels)}")
-
-    return df
-
-
+    logger.info(f"[attach_cluster_labels] ✅ Cluster labels assigned to last {n} rows.")
+    return df_trimmed
 
 
 def verify_cluster_alignment(df: pd.DataFrame, window_size: int) -> None:
@@ -63,18 +40,22 @@ def verify_cluster_alignment(df: pd.DataFrame, window_size: int) -> None:
     aligned_labels = df["Cluster_ID"].iloc[offset:]
 
     # Check presence and type
-    assert "Cluster_ID" in df.columns, "[verify_cluster_alignment] ❌ 'Cluster_ID' column missing."
+    assert (
+        "Cluster_ID" in df.columns
+    ), "[verify_cluster_alignment] ❌ 'Cluster_ID' column missing."
 
     # Check alignment length
     expected_length = len(df) - offset
     actual_length = aligned_labels.notna().sum()
-    assert actual_length == expected_length, (
-        f"[verify_cluster_alignment] ❌ Expected {expected_length} aligned cluster labels, got {actual_length}."
-    )
+    assert (
+        actual_length == expected_length
+    ), f"[verify_cluster_alignment] ❌ Expected {expected_length} aligned cluster labels, got {actual_length}."
 
     # Check for any NaNs
     if aligned_labels.isna().any():
-        raise ValueError("[verify_cluster_alignment] ❌ Found NaNs in aligned Cluster_ID values.")
+        raise ValueError(
+            "[verify_cluster_alignment] ❌ Found NaNs in aligned Cluster_ID values."
+        )
 
     logging.info("[verify_cluster_alignment] ✅ Cluster_ID alignment looks valid.")
 
@@ -103,8 +84,11 @@ def safe_numeric_column(df: pd.DataFrame, column: str, dtype=int) -> pd.Series:
         return series.astype(dtype, errors="ignore")
     return series
 
+
 def infer_window_size(df_len: int, embeddings_len: int) -> int:
     return df_len - embeddings_len + 1
+
+
 def normalize_cluster_id(cid):
     try:
         return str(int(float(cid)))

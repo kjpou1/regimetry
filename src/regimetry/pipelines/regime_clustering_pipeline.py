@@ -30,6 +30,7 @@ from regimetry.services.analysis_prompt_service import AnalysisPromptService
 from regimetry.services.clustering_report_service import ClusteringReportService
 from regimetry.services.pdf_report_service import PDFReportService
 from regimetry.services.regime_assignment_service import RegimeAssignmentService
+from regimetry.services.regime_projection_service import RegimeProjectionService
 from regimetry.utils.cluster_utils import (
     attach_cluster_labels,
     verify_cluster_alignment,
@@ -97,36 +98,32 @@ class RegimeClusteringPipeline:
             eigen_solver="arpack",
         )
         cluster_labels = spectral.fit_predict(embeddings_scaled)
+        # prefinal_path = os.path.join(self.output_dir, "cluster_labels_raw.npy")
+        # np.save(prefinal_path, cluster_labels)
         logging.info("🔗 Spectral clustering complete")
 
-        # STEP 4: Dimensionality reduction
-        tsne = TSNE(n_components=2, perplexity=30, n_iter=1000, random_state=self.seed)
-        tsne_coords = tsne.fit_transform(embeddings_scaled)
-
-        umap = UMAP(n_components=2, random_state=self.seed)
-        umap_coords = umap.fit_transform(embeddings_scaled)
-
-        # Save t-SNE/UMAP results
-        np.save(os.path.join(self.output_dir, "tsne_coords.npy"), tsne_coords)
-        np.save(os.path.join(self.output_dir, "umap_coords.npy"), umap_coords)
-
-        pd.DataFrame(tsne_coords, columns=["x", "y"]).assign(
-            Cluster_ID=cluster_labels
-        ).to_csv(os.path.join(self.output_dir, "tsne_coords.csv"), index=False)
-        pd.DataFrame(umap_coords, columns=["x", "y"]).assign(
-            Cluster_ID=cluster_labels
-        ).to_csv(os.path.join(self.output_dir, "umap_coords.csv"), index=False)
-
-        # STEP 5: Align & attach labels
+        # STEP 4: Align & attach remapped cluster labels
         assignment_service = RegimeAssignmentService()
         regime_df = assignment_service.assign_and_align(regime_df, cluster_labels)
+        final_cluster_ids = regime_df["Cluster_ID"]
+        if final_cluster_ids.isnull().any():
+            final_cluster_ids = final_cluster_ids.dropna().values  # Align to embeddings
+        else:
+            final_cluster_ids = final_cluster_ids.values
+
+        # STEP 5: Dimensionality reduction using remapped Cluster_ID
+        projection_service = RegimeProjectionService()
+        projections = projection_service.run(
+            embeddings=embeddings_scaled, cluster_ids=final_cluster_ids, seed=self.seed
+        )
+        projection_service.save(projections)
 
         # STEP 6: Report generation
         ClusteringReportService().generate_all(
             df=regime_df,
-            cluster_labels=cluster_labels,
-            tsne_coords=tsne_coords,
-            umap_coords=umap_coords,
+            cluster_labels=final_cluster_ids,
+            tsne_coords=projections["tsne"],
+            umap_coords=projections["umap"],
         )
 
         # STEP 7: Prompt
