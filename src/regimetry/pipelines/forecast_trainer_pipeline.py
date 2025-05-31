@@ -42,8 +42,9 @@ class ForecastTrainerPipeline:
             else "./configs/default_training_profile.yaml"
         )
 
+        self.output_dir = self.config.output_dir
         # Output location
-        if self.config.output_dir is None:
+        if self.output_dir is None:
             if not self.config.instrument:
                 raise ValueError(
                     "Instrument is required if output-dir is not specified."
@@ -111,8 +112,11 @@ class ForecastTrainerPipeline:
         history = model.fit(**fit_kwargs)
 
         lr_schedule = model.optimizer.learning_rate
+        final_learning_rate = (
+            float(lr_schedule.numpy()) if hasattr(lr_schedule, "numpy") else lr_schedule
+        )
         if hasattr(lr_schedule, "numpy"):
-            print(f"🔄 Final learning rate (pre-training): {lr_schedule.numpy():.6f}")
+            print(f"🔄 Final learning rate (pre-training): {final_learning_rate:.6f}")
         else:
             print(f"🔄 Learning rate schedule: {lr_schedule}")
 
@@ -124,11 +128,11 @@ class ForecastTrainerPipeline:
         # knn.fit(embeddings[valid_mask], cluster_labels[valid_mask])
 
         # # STEP 5: Save all artifacts
-        # model_path = os.path.join(self.output_dir, "embedding_forecaster.h5")
+        model_path = os.path.join(self.output_dir, "embedding_forecaster.keras")
         # knn_path = os.path.join(self.output_dir, "knn_cluster_classifier.pkl")
-        # summary_path = os.path.join(self.output_dir, "training_summary.json")
+        summary_path = os.path.join(self.output_dir, "training_summary.json")
 
-        # model.save(model_path)
+        model.save(model_path)
         # joblib.dump(knn, knn_path)
 
         summary = {
@@ -141,18 +145,19 @@ class ForecastTrainerPipeline:
             "normalize_output": self.training_profile.normalize_output,
             "epochs": self.training_profile.epochs,
             "learning_rate": self.training_profile.learning_rate,
+            "final_learning_rate": round(float(final_learning_rate), 6),
             "use_validation": self.training_profile.use_validation,
             "early_stop": self.training_profile.early_stopping,
+            "lr_scheduler": self.training_profile.lr_scheduler,
             "n_samples_used": X.shape[0],
             "n_clusters": int(np.nanmax(cluster_labels) + 1),
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
+        with open(summary_path, "w", encoding="utf-8") as f:
+            json.dump(summary, f, indent=2)
 
-# with open(summary_path, "w", encoding="utf-8") as f:
-#     json.dump(summary, f, indent=2)
-
-# logging.info(f"💾 Forecaster model saved: {model_path}")
-# logging.info(f"💾 KNN model saved:        {knn_path}")
-# logging.info(f"📄 Training summary saved: {summary_path}")
-# logging.info("✅ Forecast training pipeline completed.")
+        logging.info(f"💾 Forecaster model saved: {model_path}")
+        # logging.info(f"💾 KNN model saved:        {knn_path}")
+        logging.info(f"📄 Training summary saved: {summary_path}")
+        logging.info("✅ Forecast training pipeline completed.")
