@@ -28,10 +28,10 @@ class ForecastDatasetService:
         self.window_size = self.config.window_size
         self.stride = self.config.stride
 
-    def build_dataset(self) -> ForecastDataset:
+    def build_dataset(self, validation_split: float = 0.0) -> ForecastDataset:
         """
         Loads embeddings, validates metadata, loads cluster labels,
-        and builds the rolling window forecast dataset.
+        and builds the rolling window forecast dataset with optional time-based validation split.
         """
         logging.info("📥 Loading and validating embeddings/metadata...")
 
@@ -58,7 +58,7 @@ class ForecastDatasetService:
                 f"❌ Embedding shape mismatch: expected {expected_shape}, found {embeddings.shape}"
             )
 
-        # Resolve window and stride with CLI override warnings
+        # Resolve window and stride
         cli_window = self.config.window_size
         cli_stride = self.config.stride
         meta_window = metadata.get("window_size")
@@ -86,25 +86,45 @@ class ForecastDatasetService:
 
         num_nans = np.isnan(cluster_labels).sum()
         assert num_nans == 0, f"❌ Cluster labels contain {num_nans} NaN values."
-        assert len(cluster_labels) == embeddings.shape[0], (
-            f"❌ Length mismatch: {len(cluster_labels)} cluster labels vs "
-            f"{embeddings.shape[0]} embeddings."
-        )
+        assert (
+            len(cluster_labels) == embeddings.shape[0]
+        ), f"❌ Length mismatch: {len(cluster_labels)} cluster labels vs {embeddings.shape[0]} embeddings."
         logging.info("✅ Cluster assignment checks passed.")
 
-        # ✅ Build dataset using refactored logic
-        X, Y, Yc = build_embedding_forecast_dataset(
+        # ✅ Build dataset
+        X, Y, Y_cluster = build_embedding_forecast_dataset(
             embeddings, cluster_labels, self.window_size, self.stride
         )
-
         logging.info(
-            f"✅ Built forecast dataset: X={X.shape}, Y={Y.shape}, Yc={Yc.shape}"
+            f"✅ Built forecast dataset: X={X.shape}, Y={Y.shape}, Yc={Y_cluster.shape}"
         )
 
+        # ✂️ Time-based validation split
+        if not (0.0 <= validation_split < 1.0):
+            raise ValueError(
+                f"❌ validation_split must be between 0.0 and 1.0 (exclusive of 1.0), got {validation_split}"
+            )
+
+        if validation_split > 0.0:
+            split_idx = int(len(X) * (1 - validation_split))
+            X_train, X_val = X[:split_idx], X[split_idx:]
+            Y_train, Y_val = Y[:split_idx], Y[split_idx:]
+            Y_cluster_train, Y_cluster_val = (
+                Y_cluster[:split_idx],
+                Y_cluster[split_idx:],
+            )
+        else:
+            X_train, X_val = X, None
+            Y_train, Y_val = Y, None
+            Y_cluster_train, Y_cluster_val = Y_cluster, None
+
         return ForecastDataset(
-            X=X,
-            Y=Y,
-            Y_cluster=Yc,
+            X=X_train,
+            Y=Y_train,
+            Y_cluster=Y_cluster_train,
+            X_val=X_val,
+            Y_val=Y_val,
+            Y_cluster_val=Y_cluster_val,
             embeddings=embeddings,
             cluster_labels=cluster_labels,
             metadata=metadata,

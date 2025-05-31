@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from os import path
 
 import joblib
@@ -12,8 +12,12 @@ from tensorflow.keras.callbacks import ReduceLROnPlateau
 from tensorflow.keras.optimizers import Adam
 
 from regimetry.config.config import Config
+from regimetry.config.training_profile_config import TrainingProfileConfig
 from regimetry.logger_manager import LoggerManager
 from regimetry.services.forecast.dataset_service import ForecastDatasetService
+from regimetry.services.forecast.model_builder_service import (
+    ForecastModelBuilderService,
+)
 
 logging = LoggerManager.get_logger(__name__)
 
@@ -31,23 +35,16 @@ class ForecastTrainerPipeline:
         self.config = Config()
 
         self.dataset_service = ForecastDatasetService()
-        # # Resolve mandatory paths
-        # if not path.exists(self.config.embedding_file):
-        #     raise FileNotFoundError(
-        #         f"❌ embeddings.npy not found: {self.config.embedding_file}"
-        #     )
-        # if not path.exists(self.config.embedding_metadata_path):
-        #     raise FileNotFoundError(
-        #         f"❌ metadata file not found: {self.config.embedding_metadata_path}"
-        #     )
-        # if not path.exists(self.config.cluster_assignment_path):
-        #     raise FileNotFoundError(
-        #         f"❌ cluster_assignment.csv not found: {self.config.cluster_assignment_path}"
-        #     )
+
+        self.training_profile = TrainingProfileConfig.from_yaml(
+            self.config.training_profile_path
+            if self.config.training_profile_path
+            else "./configs/default_training_profile.yaml"
+        )
 
         # Output location
         self.output_dir = self.config.output_dir or os.path.join(
-            self.config.BASE_DIR, "forecast_models", self.config.instrument
+            self.config.FORECAST_MODEL_DIR, self.config.instrument
         )
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -55,33 +52,63 @@ class ForecastTrainerPipeline:
         logging.info("🚀 Starting forecast training pipeline")
 
         # STEP 1–2: Load embeddings and build training dataset
-        dataset = self.dataset_service.build_dataset()
+        dataset = self.dataset_service.build_dataset(
+            validation_split=(
+                self.training_profile.validation_split
+                if self.training_profile.use_validation
+                else 0.0
+            )
+        )
 
         X = dataset.X
         Y = dataset.Y
-        Yc = dataset.Y_cluster
+        Y_cluster = dataset.Y_cluster
         embeddings = dataset.embeddings
         cluster_labels = dataset.cluster_labels
 
         logging.info(dataset.summary())
 
-        # # STEP 3: Train forecaster model
-        # model = get_model(
-        #     self.config.model_type,
-        #     input_shape=(self.config.window_size, embeddings.shape[1]),
-        #     output_dim=embeddings.shape[1],
-        # )
-        # model.compile(optimizer=Adam(), loss="cosine_similarity")
+        # STEP 3: Build forecast model using profile
+        model_builder = ForecastModelBuilderService(self.training_profile)
 
-        # logging.info(f"🧠 Training model: {self.config.model_type}")
-        # model.fit(
-        #     X,
-        #     Y,
-        #     epochs=300,
-        #     batch_size=64,
-        #     callbacks=[ReduceLROnPlateau(patience=10)],
-        #     verbose=1,
-        # )
+        model, callbacks = model_builder.build_model(
+            input_shape=(self.config.window_size, embeddings.shape[1]),
+            output_dim=embeddings.shape[1],
+            normalize_output=self.training_profile.normalize_output,
+        )
+
+        logging.info(f"🧠 Training model: {self.training_profile.model_type}")
+        model.summary()
+
+        # ⚙️ Prepare training parameters using values from the training profile
+        fit_kwargs = {
+            "x": dataset.X,  # 🧠 Input training data: shape (N, window_size, embedding_dim)
+            "y": dataset.Y,  # 🎯 Target embeddings: shape (N, embedding_dim)
+            "epochs": self.training_profile.epochs,  # ⏳ Total training epochs
+            "batch_size": self.training_profile.batch_size,  # 📦 Mini-batch size from training profile
+            "callbacks": callbacks,  # 🛎️ Callbacks (e.g. EarlyStopping, LR schedulers)
+            "verbose": self.training_profile.verbose,  # 📣 Log training progress per epoch
+            "shuffle": False,  # 🔒 Important: maintain time order for sequential models
+        }
+
+        # 🔍 Validation logic: use precomputed val split if available
+        if self.training_profile.use_validation and dataset.X_val is not None:
+            # ✅ Better than validation_split — you explicitly constructed this in ForecastDatasetService
+            # ✅ Ensures val set is a true chronological holdout
+            # ❌ Using validation_split would randomly carve out val data, violating time series ordering
+            fit_kwargs["validation_data"] = (dataset.X_val, dataset.Y_val)
+        else:
+            # 🚫 Disable internal split if we're not using precomputed validation
+            fit_kwargs["validation_split"] = 0.0
+
+        # 🚀 Begin model training
+        history = model.fit(**fit_kwargs)
+
+        lr_schedule = model.optimizer.learning_rate
+        if hasattr(lr_schedule, "numpy"):
+            print(f"🔄 Final learning rate (pre-training): {lr_schedule.numpy():.6f}")
+        else:
+            print(f"🔄 Learning rate schedule: {lr_schedule}")
 
         # # STEP 4: Train KNN classifier on original embeddings
         # valid_mask = ~np.isnan(cluster_labels)
@@ -98,21 +125,28 @@ class ForecastTrainerPipeline:
         # model.save(model_path)
         # joblib.dump(knn, knn_path)
 
-        # summary = {
-        #     "instrument": self.config.instrument,
-        #     "model_type": self.config.model_type,
-        #     "embedding_dim": embeddings.shape[1],
-        #     "window_size": self.config.window_size,
-        #     "stride": self.config.stride,
-        #     "n_samples_used": X.shape[0],
-        #     "n_clusters": int(np.nanmax(cluster_labels) + 1),
-        #     "timestamp": datetime.utcnow().isoformat(),
-        # }
+        summary = {
+            "instrument": self.config.instrument,
+            "model_type": self.training_profile.model_type,
+            "loss": self.training_profile.loss,
+            "embedding_dim": embeddings.shape[1],
+            "window_size": self.config.window_size,
+            "stride": self.config.stride,
+            "normalize_output": self.training_profile.normalize_output,
+            "epochs": self.training_profile.epochs,
+            "learning_rate": self.training_profile.learning_rate,
+            "use_validation": self.training_profile.use_validation,
+            "early_stop": self.training_profile.early_stopping,
+            "n_samples_used": X.shape[0],
+            "n_clusters": int(np.nanmax(cluster_labels) + 1),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
 
-        # with open(summary_path, "w", encoding="utf-8") as f:
-        #     json.dump(summary, f, indent=2)
 
-        # logging.info(f"💾 Forecaster model saved: {model_path}")
-        # logging.info(f"💾 KNN model saved:        {knn_path}")
-        # logging.info(f"📄 Training summary saved: {summary_path}")
-        # logging.info("✅ Forecast training pipeline completed.")
+# with open(summary_path, "w", encoding="utf-8") as f:
+#     json.dump(summary, f, indent=2)
+
+# logging.info(f"💾 Forecaster model saved: {model_path}")
+# logging.info(f"💾 KNN model saved:        {knn_path}")
+# logging.info(f"📄 Training summary saved: {summary_path}")
+# logging.info("✅ Forecast training pipeline completed.")

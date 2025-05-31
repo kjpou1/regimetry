@@ -1,0 +1,40 @@
+# ./configs/default_training_profile.yaml
+
+# 🚀 Model training configuration for ForecastTrainerPipeline
+
+model_type: stratum_hydra   # Options: simple, stratum, stratum_attn, stratum_bi, stratum_hydra
+
+# ✅ Optimization
+loss: cosine_loss                      # Options: mse, mae, cosine_similarity, cosine_loss, hybrid_loss
+optimizer:
+  type: adam                           # Options: adam, sgd, rmsprop
+  learning_rate: 0.001
+
+# ⏳ Epochs and Early Stopping
+epochs: 300
+use_validation: true
+early_stopping:
+  enabled: true
+  patience: 10
+  restore_best_weights: true
+  verbose: 0
+
+# 📉 Learning Rate Scheduler
+lr_scheduler:
+  enabled: true
+  factor: 0.5
+  patience: 5
+  min_lr: 1e-6
+  verbose: 1
+
+# 🔁 Output Normalization
+normalize_output: true
+
+# 🧪 Validation Split
+validation_split: 0.2
+
+# 📢 Verbosity level for model.fit() — 0 = silent, 1 = progress bar, 2 = one line per epoch
+verbose: 1
+
+# 🗂️ Additional metadata (optional)
+description: "Default training profile for embedding forecast model."

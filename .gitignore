@@ -179,3 +179,4 @@ artifacts
 # personal configs
 configs/CAD_CHF*
 notebook/notebooks/catboost_info
+configs_tests

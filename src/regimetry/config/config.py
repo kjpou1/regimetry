@@ -43,6 +43,7 @@ class Config(metaclass=SingletonMeta):
         self.EMBEDDINGS_DIR = os.path.join(self.BASE_DIR, "embeddings")
         self.TRANSFORMER_DIR = os.path.join(self.BASE_DIR, "transformer")
         self.BASELINE_METADATA_DIR = os.path.join(self.BASE_DIR, "baseline_metadata")
+        self.FORECAST_MODEL_DIR = os.path.join(self.BASE_DIR, "forecast_models")
 
         self._signal_input_path = os.getenv(
             "SIGNAL_INPUT_PATH", os.path.join(self.RAW_DATA_DIR, "signal_input.csv")
@@ -95,6 +96,9 @@ class Config(metaclass=SingletonMeta):
         self._embedding_dir = os.getenv("EMBEDDING_DIR", None)
         self._cluster_assignment_path = os.getenv("CLUSTER_ASSIGNMENT_PATH", None)
         self._model_type = os.getenv("MODEL_TYPE", None)
+        self._training_profile_path = os.getenv(
+            "TRAINING_PROFILE_PATH", "./configs/default_training_profile.yaml"
+        )
         self._n_neighbors = int(os.getenv("N_NEIGHBORS", 5))
 
         self._base_config = os.getenv("BASE_CONFIG", None)
@@ -272,6 +276,12 @@ class Config(metaclass=SingletonMeta):
                 f"[Config] Overriding 'baseline_metadata_dir': {data['baseline_metadata_dir']}"
             )
             self.baseline_metadata_dir = data["baseline_metadata_dir"]
+
+        if "training_profile_path" in data:
+            print(
+                f"[Config] Overriding 'training_profile_path': {data['training_profile_path']}"
+            )
+            self.training_profile_path = data["training_profile_path"]
 
     @property
     def config_path(self):
@@ -625,6 +635,16 @@ class Config(metaclass=SingletonMeta):
     @property
     def report_font_path(self) -> str:
         return self._resolve_path(self._report_font_path)
+
+    @property
+    def training_profile_path(self) -> str:
+        return self._resolve_path(self._training_profile_path)
+
+    @training_profile_path.setter
+    def training_profile_path(self, value: str):
+        if not isinstance(value, str):
+            raise ValueError("training_profile_path must be a string.")
+        self._training_profile_path = value
 
     def _resolve_path(self, val: str) -> str:
         if not val:

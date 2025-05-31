@@ -32,7 +32,7 @@ def build_embedding_forecast_dataset(
         Tuple of (X, Y, Yc) numpy arrays
     """
     W, S = window_size, stride
-    X, Y, Yc = [], [], []
+    X, Y, Y_cluster = [], [], []
 
     # Iterate over the embedding timeline using a rolling window
     # Start at index W-1 so the first full window is valid (0 to W-1)
@@ -56,15 +56,15 @@ def build_embedding_forecast_dataset(
         Y.append(embeddings[t + 1])
 
         # Append next-step cluster label (Cluster_ID[t+1])
-        Yc.append(cluster_labels[t + 1])
+        Y_cluster.append(cluster_labels[t + 1])
 
     # Convert all lists to NumPy arrays for model compatibility
     X = np.array(X)
     Y = np.array(Y)
-    Yc = np.array(Yc)
+    Y_cluster = np.array(Y_cluster)
 
     # Raise an error if no valid samples were generated
     if X.shape[0] == 0:
         raise ValueError("❌ No valid training samples generated.")
 
-    return X, Y, Yc
+    return X, Y, Y_cluster
