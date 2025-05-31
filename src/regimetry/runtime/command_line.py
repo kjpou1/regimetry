@@ -344,6 +344,13 @@ class CommandLine:
         )
 
         forecast_train_parser.add_argument(
+            "--profile-path",
+            type=str,
+            required=False,
+            help="Optional path to training profile YAML (overrides default).",
+        )
+
+        forecast_train_parser.add_argument(
             "--config",
             type=str,
             required=False,
@@ -404,4 +411,5 @@ class CommandLine:
             ),
             forecast_model_type=getattr(args, "model_type", None),
             forecast_n_neighbors=getattr(args, "n_neighbors", 5),
+            profile_path=getattr(args, "profile_path", None),
         )

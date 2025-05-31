@@ -17,7 +17,7 @@ early_stopping:
   enabled: true
   patience: 10
   restore_best_weights: true
-  verbose: 0
+  verbose: 1
 
 # 📉 Learning Rate Scheduler
 lr_scheduler:

@@ -57,3 +57,5 @@ class CommandLineArgs:
     forecast_cluster_assignment_path: Optional[str] = None
     forecast_model_type: Optional[str] = None
     forecast_n_neighbors: Optional[int] = 5
+
+    profile_path: Optional[str] = None
