@@ -43,9 +43,15 @@ class ForecastTrainerPipeline:
         )
 
         # Output location
-        self.output_dir = self.config.output_dir or os.path.join(
-            self.config.FORECAST_MODEL_DIR, self.config.instrument
-        )
+        if self.config.output_dir is None:
+            if not self.config.instrument:
+                raise ValueError(
+                    "Instrument is required if output-dir is not specified."
+                )
+            self.output_dir = self.config.output_dir or os.path.join(
+                self.config.FORECAST_MODEL_DIR, self.config.instrument
+            )
+
         os.makedirs(self.output_dir, exist_ok=True)
 
     def run(self):

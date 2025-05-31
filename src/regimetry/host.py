@@ -96,6 +96,10 @@ class Host:
             logging.info(f"Overriding base_config from CLI: {args.base_config}")
             self.config.base_config = args.base_config
 
+        if self.args.output_dir:
+            logging.info(f"Overriding output_dir from CLI: {self.args.output_dir}")
+            self.config.output_dir = self.args.output_dir
+
         if self.args.command == "forecast" and self.args.forecast_command == "train":
             if args.profile_path:
                 logging.info(
@@ -209,10 +213,6 @@ class Host:
                     f"Overriding regime_data_path from CLI: {self.args.regime_data_path}"
                 )
                 self.config.regime_data_path = self.args.regime_data_path
-
-            if self.args.output_dir:
-                logging.info(f"Overriding output_dir from CLI: {self.args.output_dir}")
-                self.config.output_dir = self.args.output_dir
 
             if self.args.window_size:
                 logging.info(
