@@ -8,8 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import normalize
-from tensorflow.keras.callbacks import ReduceLROnPlateau
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import ModelCheckpoint
 
 from regimetry.config.config import Config
 from regimetry.config.training_profile_config import TrainingProfileConfig
@@ -52,6 +51,7 @@ class ForecastTrainerPipeline:
             self.output_dir = self.config.output_dir or os.path.join(
                 self.config.FORECAST_MODEL_DIR, self.config.instrument
             )
+            self.config.output_dir = self.output_dir
 
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -149,6 +149,7 @@ class ForecastTrainerPipeline:
             "use_validation": self.training_profile.use_validation,
             "early_stop": self.training_profile.early_stopping,
             "lr_scheduler": self.training_profile.lr_scheduler,
+            "checkpoint": self.training_profile.model_checkpoint,
             "n_samples_used": X.shape[0],
             "n_clusters": int(np.nanmax(cluster_labels) + 1),
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -158,6 +159,21 @@ class ForecastTrainerPipeline:
             json.dump(summary, f, indent=2)
 
         logging.info(f"💾 Forecaster model saved: {model_path}")
-        # logging.info(f"💾 KNN model saved:        {knn_path}")
+        if self.training_profile.checkpoint_enabled:
+            for cb in callbacks:
+                if isinstance(cb, ModelCheckpoint):
+                    best_model_path = cb.filepath
+                    if isinstance(
+                        best_model_path, str
+                    ):  # some TF versions may use callables
+                        if os.path.exists(best_model_path):
+                            logging.info(
+                                f"🏆 Best model checkpoint saved at: {best_model_path}"
+                            )
+                        else:
+                            logging.warning(
+                                f"⚠️ Best model checkpoint expected but not found at: {best_model_path}"
+                            )
+                # logging.info(f"💾 KNN model saved:        {knn_path}")
         logging.info(f"📄 Training summary saved: {summary_path}")
         logging.info("✅ Forecast training pipeline completed.")

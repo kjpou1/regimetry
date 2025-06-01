@@ -64,11 +64,6 @@ class ForecastModelBuilderService:
         # Build the model
         model = factory.build(model_type=model_type)
 
-        # Compile the model
-        # model.compile(
-        #     optimizer=Adam(learning_rate=0.001),
-        #     loss=cosine_similarity,
-        # )
         model.compile(
             optimizer=self.training_profile.get_optimizer(),
             loss=get_loss_function(self.training_profile.loss),

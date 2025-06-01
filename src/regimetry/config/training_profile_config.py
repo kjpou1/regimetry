@@ -1,10 +1,13 @@
 # src/regimetry/config/training_profile_config.py
 
+import os
 from dataclasses import dataclass, field
 
 import yaml
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.keras.optimizers import SGD, Adam, RMSprop
+
+from regimetry.config.config import Config
 
 
 @dataclass
@@ -24,6 +27,7 @@ class TrainingProfileConfig:
         validation_split=0.2,
         verbose=1,
         description=None,
+        model_checkpoint=None,
     ):
         self.model_type = model_type
         self.loss = loss
@@ -70,6 +74,28 @@ class TrainingProfileConfig:
         self.lr_min_lr = self._parse_float(self.lr_scheduler.get("min_lr"), 1e-6)
         self.lr_verbose = self._parse_int(self.lr_scheduler.get("verbose"), 0)
 
+        self.model_checkpoint = model_checkpoint or {
+            "enabled": False,
+            "mode": "min",
+            "save_best_only": True,
+            "save_weights_only": False,
+            "filename": "best_model.keras",
+            "verbose": 0,
+        }
+
+        self.checkpoint_enabled = self.model_checkpoint.get("enabled", False)
+        self.checkpoint_mode = self.model_checkpoint.get("mode", "min")
+        self.checkpoint_save_best_only = self.model_checkpoint.get(
+            "save_best_only", True
+        )
+        self.checkpoint_save_weights_only = self.model_checkpoint.get(
+            "save_weights_only", False
+        )
+        self.checkpoint_filename = self.model_checkpoint.get(
+            "filename", "best_model.keras"
+        )
+        self.checkpoint_verbose = self.model_checkpoint.get("verbose", 0)
+
     def get_optimizer(self):
         if self.optimizer_type == "adam":
             return Adam(learning_rate=self.learning_rate)
@@ -100,7 +126,7 @@ class TrainingProfileConfig:
             data = yaml.safe_load(f) or {}
         return cls(**data)
 
-    def get_callbacks(self):
+    def get_callbacks(self, output_dir: str = None):
         """Build Keras callbacks based on training settings."""
         monitor_metric = "val_loss" if self.use_validation else "loss"
         callbacks = []
@@ -125,4 +151,21 @@ class TrainingProfileConfig:
                     verbose=self.early_stopping_verbose,
                 )
             )
+
+        if self.checkpoint_enabled:
+            config = Config()
+            best_model_path = config._resolve_path(
+                os.path.join(config.output_dir, self.checkpoint_filename)
+            )
+            callbacks.append(
+                ModelCheckpoint(
+                    filepath=best_model_path,
+                    monitor=monitor_metric,
+                    mode=self.checkpoint_mode,
+                    save_best_only=self.checkpoint_save_best_only,
+                    save_weights_only=self.checkpoint_save_weights_only,
+                    verbose=self.checkpoint_verbose,
+                )
+            )
+
         return callbacks
