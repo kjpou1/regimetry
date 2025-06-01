@@ -1,3 +1,4 @@
+import tensorflow as tf
 import tensorflow.keras.backend as K
 from tensorflow.keras import Model, Sequential
 from tensorflow.keras.layers import (
@@ -8,9 +9,17 @@ from tensorflow.keras.layers import (
     GlobalAveragePooling1D,
     Input,
     Lambda,
+    Layer,
     LayerNormalization,
     MultiHeadAttention,
 )
+from tensorflow.keras.saving import register_keras_serializable
+
+
+@register_keras_serializable()
+class L2Normalization(Layer):
+    def call(self, inputs):
+        return tf.nn.l2_normalize(inputs, axis=-1)
 
 
 class ForecasterFactory:
@@ -54,7 +63,7 @@ class ForecasterFactory:
         x = Dense(self.output_dim)(x)
 
         if self.normalize_output:
-            x = Lambda(lambda t: K.l2_normalize(t, axis=-1))(x)
+            x = L2Normalization()(x)
 
         return Model(inputs, x, name="stratum_hydra_forecaster")
 
@@ -71,7 +80,7 @@ class ForecasterFactory:
 
         x = Dense(self.output_dim)(context)
         if self.normalize_output:
-            x = Lambda(lambda t: K.l2_normalize(t, axis=-1))(x)
+            x = L2Normalization()(x)
 
         return Model(inputs, x, name="stratum_attn_forecaster")
 
@@ -100,6 +109,6 @@ class ForecasterFactory:
 
         model.add(Dense(self.output_dim))
         if self.normalize_output:
-            model.add(Lambda(lambda x: K.l2_normalize(x, axis=-1)))
+            model.add(L2Normalization())
 
         return model

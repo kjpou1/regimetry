@@ -4,8 +4,10 @@ from tensorflow.keras.losses import (
     MeanAbsoluteError,
     MeanSquaredError,
 )
+from tensorflow.keras.saving import register_keras_serializable
 
 
+@register_keras_serializable()
 def cosine_loss(y_true, y_pred):
     """Custom cosine loss: 1 - cosine similarity"""
     y_true = K.l2_normalize(y_true, axis=-1)
@@ -13,6 +15,7 @@ def cosine_loss(y_true, y_pred):
     return 1 - K.sum(y_true * y_pred, axis=-1)
 
 
+@register_keras_serializable()
 def hybrid_loss(y_true, y_pred):
     """Hybrid of MSE and cosine loss"""
     mse = MeanSquaredError()
