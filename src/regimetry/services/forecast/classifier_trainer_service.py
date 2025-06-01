@@ -18,7 +18,7 @@ class ForecastClassifierTrainerService:
         self.config = Config()
         self.n_neighbors = n_neighbors
 
-        self.model_output_path = self.config._resolve_path(
+        self.classifier_output_path = self.config._resolve_path(
             os.path.join(self.config.output_dir, "knn_classifier.joblib")
         )
 
@@ -49,8 +49,8 @@ class ForecastClassifierTrainerService:
         model = KNeighborsClassifier(n_neighbors=self.n_neighbors, weights="distance")
         model.fit(X, y)
 
-        os.makedirs(os.path.dirname(self.model_output_path), exist_ok=True)
-        joblib.dump(model, self.model_output_path)
+        os.makedirs(os.path.dirname(self.classifier_output_path), exist_ok=True)
+        joblib.dump(model, self.classifier_output_path)
 
-        logging.info(f"✅ KNN model saved to: {self.model_output_path}")
-        return model
+        logging.info(f"✅ KNN model saved to: {self.classifier_output_path}")
+        return model, self.classifier_output_path
