@@ -99,7 +99,7 @@ class Config(metaclass=SingletonMeta):
         self._training_profile_path = os.getenv(
             "TRAINING_PROFILE_PATH", "./configs/default_training_profile.yaml"
         )
-        self._n_neighbors = int(os.getenv("N_NEIGHBORS", 5))
+        self._n_neighbors = os.getenv("N_NEIGHBORS", None)
 
         self._base_config = os.getenv("BASE_CONFIG", None)
         self._baseline_metadata_dir = os.getenv(

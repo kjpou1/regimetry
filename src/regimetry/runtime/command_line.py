@@ -325,7 +325,7 @@ class CommandLine:
         forecast_train_parser.add_argument(
             "--n-neighbors",
             type=int,
-            default=5,
+            default=None,
             help="Number of neighbors to use for KNN cluster classification.",
         )
 
@@ -410,6 +410,6 @@ class CommandLine:
                 args, "cluster_assignment_path", None
             ),
             forecast_model_type=getattr(args, "model_type", None),
-            forecast_n_neighbors=getattr(args, "n_neighbors", 5),
+            forecast_n_neighbors=getattr(args, "n_neighbors", None),
             profile_path=getattr(args, "profile_path", None),
         )

@@ -28,6 +28,7 @@ class TrainingProfileConfig:
         verbose=1,
         description=None,
         model_checkpoint=None,
+        n_neighbors=5,
     ):
         self.model_type = model_type
         self.loss = loss
@@ -38,6 +39,7 @@ class TrainingProfileConfig:
         self.validation_split = validation_split
         self.verbose = verbose
         self.description = description
+        self.n_neighbors = n_neighbors
 
         self.optimizer_config = optimizer or {"type": "adam", "learning_rate": 0.001}
         self.optimizer_type = self.optimizer_config.get("type", "adam").lower()

@@ -56,6 +56,6 @@ class CommandLineArgs:
     forecast_embedding_dir: Optional[str] = None
     forecast_cluster_assignment_path: Optional[str] = None
     forecast_model_type: Optional[str] = None
-    forecast_n_neighbors: Optional[int] = 5
+    forecast_n_neighbors: Optional[int] = None
 
     profile_path: Optional[str] = None

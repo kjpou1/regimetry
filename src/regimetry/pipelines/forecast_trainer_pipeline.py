@@ -13,6 +13,9 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 from regimetry.config.config import Config
 from regimetry.config.training_profile_config import TrainingProfileConfig
 from regimetry.logger_manager import LoggerManager
+from regimetry.services.forecast.classifier_trainer_service import (
+    ForecastClassifierTrainerService,
+)
 from regimetry.services.forecast.dataset_service import ForecastDatasetService
 from regimetry.services.forecast.model_builder_service import (
     ForecastModelBuilderService,
@@ -120,43 +123,8 @@ class ForecastTrainerPipeline:
         else:
             print(f"🔄 Learning rate schedule: {lr_schedule}")
 
-        # # STEP 4: Train KNN classifier on original embeddings
-        # valid_mask = ~np.isnan(cluster_labels)
-        # knn = KNeighborsClassifier(
-        #     n_neighbors=self.config.n_neighbors, weights="distance"
-        # )
-        # knn.fit(embeddings[valid_mask], cluster_labels[valid_mask])
-
-        # # STEP 5: Save all artifacts
         model_path = os.path.join(self.output_dir, "embedding_forecaster.keras")
-        # knn_path = os.path.join(self.output_dir, "knn_cluster_classifier.pkl")
-        summary_path = os.path.join(self.output_dir, "training_summary.json")
-
         model.save(model_path)
-        # joblib.dump(knn, knn_path)
-
-        summary = {
-            "instrument": self.config.instrument,
-            "model_type": self.training_profile.model_type,
-            "loss": self.training_profile.loss,
-            "embedding_dim": embeddings.shape[1],
-            "window_size": self.config.window_size,
-            "stride": self.config.stride,
-            "normalize_output": self.training_profile.normalize_output,
-            "epochs": self.training_profile.epochs,
-            "learning_rate": self.training_profile.learning_rate,
-            "final_learning_rate": round(float(final_learning_rate), 6),
-            "use_validation": self.training_profile.use_validation,
-            "early_stop": self.training_profile.early_stopping,
-            "lr_scheduler": self.training_profile.lr_scheduler,
-            "checkpoint": self.training_profile.model_checkpoint,
-            "n_samples_used": X.shape[0],
-            "n_clusters": int(np.nanmax(cluster_labels) + 1),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        }
-
-        with open(summary_path, "w", encoding="utf-8") as f:
-            json.dump(summary, f, indent=2)
 
         logging.info(f"💾 Forecaster model saved: {model_path}")
         if self.training_profile.checkpoint_enabled:
@@ -174,6 +142,41 @@ class ForecastTrainerPipeline:
                             logging.warning(
                                 f"⚠️ Best model checkpoint expected but not found at: {best_model_path}"
                             )
-                # logging.info(f"💾 KNN model saved:        {knn_path}")
+
+        # STEP 4: Train KNN classifier on original embeddings
+        valid_mask = ~np.isnan(cluster_labels)
+        X_knn = embeddings[valid_mask]
+        y_knn = cluster_labels[valid_mask].astype(int)
+        # Resolve n_neighbors priority: CLI/Config override > training profile
+        n_neighbors = self.config.n_neighbors or self.training_profile.n_neighbors
+
+        classifier_trainer = ForecastClassifierTrainerService(n_neighbors=n_neighbors)
+        classifier_trainer.train(X_knn, y_knn)
+
+        # # STEP 5: Save all artifacts
+        summary = {
+            "instrument": self.config.instrument,
+            "model_type": self.training_profile.model_type,
+            "loss": self.training_profile.loss,
+            "embedding_dim": embeddings.shape[1],
+            "window_size": self.config.window_size,
+            "stride": self.config.stride,
+            "normalize_output": self.training_profile.normalize_output,
+            "epochs": self.training_profile.epochs,
+            "learning_rate": self.training_profile.learning_rate,
+            "final_learning_rate": round(float(final_learning_rate), 6),
+            "use_validation": self.training_profile.use_validation,
+            "early_stop": self.training_profile.early_stopping,
+            "lr_scheduler": self.training_profile.lr_scheduler,
+            "checkpoint": self.training_profile.model_checkpoint,
+            "n_samples_used": X.shape[0],
+            "n_clusters": int(np.nanmax(cluster_labels) + 1),
+            "n_neighbors": n_neighbors,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        summary_path = os.path.join(self.output_dir, "training_summary.json")
+        with open(summary_path, "w", encoding="utf-8") as f:
+            json.dump(summary, f, indent=2)
         logging.info(f"📄 Training summary saved: {summary_path}")
         logging.info("✅ Forecast training pipeline completed.")

@@ -38,3 +38,16 @@ verbose: 1
 
 # 🗂️ Additional metadata (optional)
 description: "Default training profile for embedding forecast model."
+
+# 💾 Model Checkpointing (optional)
+model_checkpoint:
+  enabled: true                     # Enable checkpointing during training
+  mode: min                         # 'min' for loss, 'max' for accuracy or custom metrics
+  save_best_only: true              # Save only the best performing model during training
+  save_weights_only: false          # If true, saves weights only (.ckpt), else full model (.keras)
+  filename: best_model.keras        # File name for the checkpoint
+  verbose: 1                        # 0 = silent, 1 = info logs
+
+
+# 🔍 Classifier Settings (KNN)
+n_neighbors: 5
