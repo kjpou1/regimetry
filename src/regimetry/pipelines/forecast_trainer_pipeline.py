@@ -17,6 +17,7 @@ from regimetry.services.forecast.classifier_trainer_service import (
     ForecastClassifierTrainerService,
 )
 from regimetry.services.forecast.dataset_service import ForecastDatasetService
+from regimetry.services.forecast.evaluation_service import ForecastEvaluationService
 from regimetry.services.forecast.model_builder_service import (
     ForecastModelBuilderService,
 )
@@ -127,6 +128,7 @@ class ForecastTrainerPipeline:
         model.save(model_path)
 
         logging.info(f"💾 Forecaster model saved: {model_path}")
+        best_model_path = None
         if self.training_profile.checkpoint_enabled:
             for cb in callbacks:
                 if isinstance(cb, ModelCheckpoint):
@@ -151,7 +153,7 @@ class ForecastTrainerPipeline:
         n_neighbors = self.config.n_neighbors or self.training_profile.n_neighbors
 
         classifier_trainer = ForecastClassifierTrainerService(n_neighbors=n_neighbors)
-        classifier_trainer.train(X_knn, y_knn)
+        _, classifier_output_path = classifier_trainer.train(X_knn, y_knn)
 
         # # STEP 5: Save all artifacts
         summary = {
@@ -178,5 +180,46 @@ class ForecastTrainerPipeline:
         summary_path = os.path.join(self.output_dir, "training_summary.json")
         with open(summary_path, "w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2)
+
         logging.info(f"📄 Training summary saved: {summary_path}")
         logging.info("✅ Forecast training pipeline completed.")
+
+        # 🧪 STEP 6: Save training history for loss curve
+        history_path = os.path.join(self.output_dir, "forecast_history.json")
+        with open(history_path, "w", encoding="utf-8") as f:
+            json.dump(history.history, f)
+        logging.info(f"📈 Training history saved: {history_path}")
+
+        # 🧪 STEP 7: Run evaluation
+        evaluator = ForecastEvaluationService(
+            forecast_model_path=model_path,
+            best_model_path=best_model_path,
+            classifier_model_path=classifier_output_path,
+            history_path=history_path,
+            dataset=dataset,
+        )
+
+        evaluator.evaluate()
+
+        eval_summary = evaluator.get_summary()
+        eval_metrics = evaluator.get_metrics()
+
+        # Save evaluation metrics
+        metrics_path = os.path.join(self.output_dir, "evaluation_metrics.json")
+        with open(metrics_path, "w", encoding="utf-8") as f:
+            json.dump(eval_metrics, f, indent=2)
+        logging.info(f"📊 Evaluation metrics saved: {metrics_path}")
+
+        # Print summary
+        # Build a pretty multi-line string first
+        summary_lines = ["\n📋 Forecast Model Summary:"]
+        for k, v in eval_summary.items():
+            summary_lines.append(f"{k:30}: {v}")
+
+        # Join and log once
+        logging.info("\n".join(summary_lines))
+
+        eval_summary_path = os.path.join(self.output_dir, "evaluation_summary.json")
+        with open(eval_summary_path, "w", encoding="utf-8") as f:
+            json.dump(eval_summary, f, indent=2)
+        logging.info(f"📊 Evaluation summary saved: {eval_summary_path}")
