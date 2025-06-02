@@ -134,7 +134,7 @@ class ForecastEvaluationService:
         self.predicted_next_cluster_confidence = float(
             predicted_prob[0][predicted_cluster]
         )
-        self.predicted_probabilities = predicted_prob.tolist()
+        self.predicted_probabilities = predicted_prob[0]
 
     def get_summary(self) -> dict:
         predicted_pct = f"{self.predicted_next_cluster_confidence * 100:.2f}%"
@@ -147,12 +147,10 @@ class ForecastEvaluationService:
             "Final Val Loss": (
                 f"{self.final_val_loss:.6f}" if self.final_val_loss else "N/A"
             ),
-            "Embedding MSE": f"{self.embedding_mse:.6f}",
-            "Classifier Accuracy": f"{self.accuracy:.4f}",
             "Predicted Cluster": int(self.predicted_next_cluster),
             "Predicted Cluster Probability": self.predicted_next_cluster_confidence,
             "Predicted Cluster Confidence": predicted_pct,
-            "Predicted Probabilities": self.predicted_probabilities,
+            "Predicted Probabilities": self.predicted_probabilities.tolist(),
         }
 
     def get_metrics(self):
