@@ -313,7 +313,7 @@ class ClusteringReportService:
         )
         for cluster_id in unique_cluster_ids:
             cluster_df = df_filtered[df_filtered["Cluster_ID"] == cluster_id]
-            logging.info(f"[Cluster Trace] ID: {cluster_id} → {len(cluster_df)} points")
+            # logging.info(f"[Cluster Trace] ID: {cluster_id} → {len(cluster_df)} points")
             if cluster_df.empty:
                 continue
             scatter_traces.append(
