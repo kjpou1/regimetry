@@ -21,6 +21,7 @@ from regimetry.services.forecast.evaluation_service import ForecastEvaluationSer
 from regimetry.services.forecast.model_builder_service import (
     ForecastModelBuilderService,
 )
+from regimetry.services.forecast.report_service import ForecastReportService
 
 logging = LoggerManager.get_logger(__name__)
 
@@ -223,3 +224,10 @@ class ForecastTrainerPipeline:
         with open(eval_summary_path, "w", encoding="utf-8") as f:
             json.dump(eval_summary, f, indent=2)
         logging.info(f"📊 Evaluation summary saved: {eval_summary_path}")
+
+        # 🧾 STEP 8: Generate forecast evaluation report visuals
+        report_service = ForecastReportService.from_evaluator(
+            evaluator=evaluator, history_path=history_path, output_dir=self.output_dir
+        )
+        report_service.generate_all()
+        logging.info("📊 Forecast evaluation report visuals saved.")

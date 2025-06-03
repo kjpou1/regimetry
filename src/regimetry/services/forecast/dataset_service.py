@@ -43,7 +43,7 @@ class ForecastDatasetService:
             raise FileNotFoundError(f"❌ metadata file not found: {self.metadata_file}")
         if not os.path.exists(self.cluster_assignment_path):
             raise FileNotFoundError(
-                f"❌ cluster_assignment.csv not found: {self.cluster_assignment_path}"
+                f"❌ regime_assignment.csv not found: {self.cluster_assignment_path}"
             )
 
         embeddings = np.load(self.embedding_file)

@@ -137,15 +137,27 @@ class ForecastEvaluationService:
             accuracy_score(self.true_clusters, self.predicted_clusters)
         )
 
+        # Determine the full set of expected cluster labels (based on config)
+        all_labels = sorted(set(np.unique(self.dataset.cluster_labels)))
+
         # Confusion matrix and per-cluster performance
-        self.cm = confusion_matrix(self.true_clusters, self.predicted_clusters)
+        self.cm = confusion_matrix(
+            self.true_clusters,
+            self.predicted_clusters,
+            labels=all_labels,  # Force full matrix shape
+        )
+
         precision, recall, f1, _ = precision_recall_fscore_support(
-            self.true_clusters, self.predicted_clusters, average=None, zero_division=0
+            self.true_clusters,
+            self.predicted_clusters,
+            labels=all_labels,
+            average=None,
+            zero_division=0,
         )
 
         self.df_perf = pd.DataFrame(
             {
-                "Cluster": list(range(len(precision))),
+                "Cluster": all_labels,
                 "Precision": precision,
                 "Recall": recall,
                 "F1": f1,
@@ -156,6 +168,9 @@ class ForecastEvaluationService:
             f"✅ Evaluation complete. Accuracy: {self.accuracy:.4f}, MSE: {self.embedding_mse:.6f}, Predicted: {predicted_cluster}"
         )
 
+        self.true_next_cluster_labels = self.true_clusters
+        self.predicted_next_cluster_labels = self.predicted_clusters
+
         # Save key single-step predictions
         self.predicted_next_embedding = E_hat
         self.predicted_next_cluster = int(predicted_cluster)
@@ -163,6 +178,55 @@ class ForecastEvaluationService:
             predicted_prob[0][predicted_cluster]
         )
         self.predicted_probabilities = predicted_prob[0]
+
+        self.cluster_distribution_info = self._analyze_cluster_distribution()
+
+    def _analyze_cluster_distribution(self) -> dict:
+        """
+        Analyze and return per-cluster distribution stats across train and val.
+
+        Returns:
+            dict: Contains list of per-cluster counts and any val-only cluster warnings.
+        """
+        train_clusters = self.dataset.Y_cluster
+        val_clusters = self.dataset.Y_cluster_val
+        if val_clusters is None:
+            val_clusters = np.array([])
+        else:
+            val_clusters = np.asarray(val_clusters)
+
+        train_counts = Counter(train_clusters)
+        val_counts = Counter(val_clusters)
+
+        # Use union of config-declared clusters and seen clusters
+        observed = set(train_counts) | set(val_counts)
+        config_clusters = set(range(self.config.n_clusters))
+        all_clusters = sorted(observed | config_clusters)
+
+        distribution = []
+        val_only = []
+
+        for c in all_clusters:
+            train_count = train_counts.get(c, 0)
+            val_count = val_counts.get(c, 0)
+            total = train_count + val_count
+            distribution.append(
+                {
+                    "Cluster": int(c),
+                    "Train Count": train_count,
+                    "Val Count": val_count,
+                    "Total Count": total,
+                }
+            )
+            if train_count == 0 and val_count > 0:
+                val_only.append(int(c))
+
+        if val_only:
+            logging.warning(f"🚨 Val-only clusters (missing in train): {val_only}")
+        else:
+            logging.info("✅ All clusters represented in training set.")
+
+        return {"distribution": distribution, "val_only_clusters": val_only}
 
     def get_summary(self) -> dict:
         """
@@ -185,6 +249,9 @@ class ForecastEvaluationService:
             "Predicted Cluster Probability": self.predicted_next_cluster_confidence,
             "Predicted Cluster Confidence": predicted_pct,
             "Predicted Probabilities": self.predicted_probabilities.tolist(),
+            "Val-only Clusters": self.cluster_distribution_info.get(
+                "val_only_clusters", []
+            ),
         }
 
     def get_metrics(self) -> dict:
@@ -199,4 +266,7 @@ class ForecastEvaluationService:
             "classifier_accuracy": self.accuracy,
             "confusion_matrix": self.cm.tolist(),
             "performance": self.df_perf.to_dict(orient="records"),
+            "cluster_distribution": self.cluster_distribution_info.get(
+                "distribution", []
+            ),
         }
